@@ -14,7 +14,7 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Dashboard',
+        title: 'Data KK',
         href: '/menu',
         icon: LayoutGrid,
     },
