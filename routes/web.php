@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\KecamatanController;
+use App\Http\Controllers\KelurahanController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -14,6 +15,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 
     Route::resource('kecamatan', KecamatanController::class);
+    Route::resource('kelurahan', KelurahanController::class);
 });
 
 

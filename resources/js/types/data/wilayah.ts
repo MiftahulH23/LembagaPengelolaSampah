@@ -3,4 +3,12 @@ export namespace Wilayah {
         id: string;
         nama_kecamatan: string;
     }
+
+    export interface Kelurahan {
+        id: string;
+        nama_kelurahan: string;
+        kecamatan_id: string;
+        kecamatan?: Kecamatan;
+
+    }
 }

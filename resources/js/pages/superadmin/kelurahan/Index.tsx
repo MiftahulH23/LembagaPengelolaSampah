@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Wilayah } from '@/types/data/wilayah';
 import { Head, router, useForm } from '@inertiajs/react';
@@ -12,23 +13,32 @@ import { SquarePen, Trash2, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-const Index = (props: { kecamatan: Wilayah.Kecamatan[] }) => {
-    const { kecamatan } = props;
-    const breadcrumb = [{ title: 'Kecamatan', href: '/kecamatan' }];
-
+const Index = (props: { kelurahan: Wilayah.Kelurahan[]; kecamatan: Wilayah.Kecamatan[] }) => {
+    const { kelurahan, kecamatan } = props;
+    const breadcrumb = [{ title: 'Kelurahan', href: '/kelurahan' }];
     const { data, setData, post, processing, errors, reset } = useForm({
-        nama_kecamatan: '',
+        nama_kelurahan: '',
+        kecamatan_id: '',
     });
-    const { data: editData, setData: setEditData, put, processing: editProcessing, errors: editErrors } = useForm({ nama_kecamatan: '' });
-
-    const columns: ColumnDef<Wilayah.Kecamatan>[] = [
+    const {
+        data: editData,
+        setData: setEditData,
+        put,
+        processing: editProcessing,
+        errors: editErrors,
+    } = useForm({ nama_kelurahan: '', kecamatan_id: '' });
+    const columns: ColumnDef<Wilayah.Kelurahan>[] = [
         {
             id: 'nomor',
             header: 'No',
             cell: ({ row }) => row.index + 1,
         },
         {
-            accessorKey: 'nama_kecamatan',
+            accessorKey: 'nama_kelurahan',
+            header: 'Nama Kelurahan',
+        },
+        {
+            accessorKey: 'kecamatan.nama_kecamatan',
             header: 'Nama Kecamatan',
         },
         {
@@ -49,58 +59,61 @@ const Index = (props: { kecamatan: Wilayah.Kecamatan[] }) => {
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [selectedKecamatan, setSelectedKecamatan] = useState<Wilayah.Kecamatan | null>(null);
+    const [selectedKelurahan, setSelectedKelurahan] = useState<Wilayah.Kelurahan | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('kecamatan.store'), {
+        post(route('kelurahan.store'), {
             preserveScroll: true,
             onSuccess: () => {
                 reset();
                 setIsAddModalOpen(false);
-                toast.success('Kecamatan berhasil ditambahkan');
+                toast.success('Kelurahan berhasil ditambahkan.');
             },
-            onError: (errors) => {
-                toast.error('Terjadi kesalahan saat menambahkan kecamatan.');
+            onError: () => {
+                toast.error('Terjadi kesalahan saat menambahkan kelurahan.');
             },
         });
     };
 
-    const openEditModal = (kecamatan: Wilayah.Kecamatan) => {
-        setSelectedKecamatan(kecamatan);
-        setEditData({ nama_kecamatan: kecamatan.nama_kecamatan });
+    const openEditModal = (kelurahan: Wilayah.Kelurahan) => {
+        setSelectedKelurahan(kelurahan);
+        setEditData({
+            nama_kelurahan: kelurahan.nama_kelurahan,
+            kecamatan_id: String(kelurahan.kecamatan_id),
+        });
         setIsEditModalOpen(true);
     };
+
     const handleEditSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route('kecamatan.update', selectedKecamatan?.id), {
+        put(route('kelurahan.update', selectedKelurahan?.id), {
             preserveScroll: true,
             onSuccess: () => {
                 reset();
                 setIsEditModalOpen(false);
-                toast.success('Kecamatan berhasil diubah');
+                toast.success('Kelurahan berhasil diubah.');
             },
-            onError: (errors) => {
-                toast.error('Terjadi kesalahan saat mengubah kecamatan.');
+            onError: () => {
+                toast.error('Terjadi kesalahan saat mengubah kelurahan.');
             },
         });
     };
 
     const handleDelete = (id: string) => {
-        router.delete(route('kecamatan.destroy', id), {
+        router.delete(route('kelurahan.destroy', id), {
             preserveScroll: true,
             onSuccess: () => toast.success('Kecamatan berhasil dihapus'),
             onError: () => toast.error('Gagal menghapus Kecamatan'),
         });
     };
-
     return (
         <AppLayout breadcrumbs={breadcrumb}>
-            <Head title="Kecamatan" />
+            <Head title="Kelurahan" />
             <div className="container">
-                <h1>Data Kecamatan</h1>
-                <DataTable columns={columns} data={kecamatan}>
+                <h1>Data Kelurahan</h1>
+                <DataTable columns={columns} data={kelurahan}>
                     {({ table }) => (
                         <DataTableControls table={table} action={<Button onClick={() => setIsAddModalOpen(true)}>Tambah</Button>} search>
                             <DataTableFilter table={table} />
@@ -110,18 +123,34 @@ const Index = (props: { kecamatan: Wilayah.Kecamatan[] }) => {
                 {/* Modal Tambah Data */}
                 <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
                     <DialogContent>
-                        <DialogTitle>Tambah Kecamatan</DialogTitle>
+                        <DialogTitle>Tambah Kelurahan</DialogTitle>
                         <form onSubmit={handleSubmit}>
                             <div>
-                                <Label htmlFor="nama_kecamatan">Nama Kecamatan</Label>
+                                <Label htmlFor="kecamatan_id">Kecamatan</Label>
+                                <Select value={data.kecamatan_id} onValueChange={(value) => setData('kecamatan_id', value)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Pilih Kecamatan" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {kecamatan.map((item) => (
+                                            <SelectItem key={item.id} value={String(item.id)}>
+                                                {item.nama_kecamatan}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.kecamatan_id && <span className="text-sm text-red-500">{errors.kecamatan_id}</span>}
+                            </div>
+                            <div>
+                                <Label htmlFor="nama_kelurahan">Nama Kelurahan</Label>
                                 <Input
                                     type="text"
-                                    id="nama_kecamatan"
-                                    name="nama_kecamatan"
-                                    value={data.nama_kecamatan}
-                                    onChange={(e) => setData('nama_kecamatan', e.target.value)}
+                                    id="nama_kelurahan"
+                                    name="nama_kelurahan"
+                                    value={data.nama_kelurahan}
+                                    onChange={(e) => setData('nama_kelurahan', e.target.value)}
                                 />
-                                {errors.nama_kecamatan && <span className="text-sm text-red-500">{errors.nama_kecamatan}</span>}
+                                {errors.nama_kelurahan && <span className="text-sm text-red-500">{errors.nama_kelurahan}</span>}
                             </div>
                             <div className="flex justify-end">
                                 <Button type="submit" disabled={processing}>
@@ -135,18 +164,34 @@ const Index = (props: { kecamatan: Wilayah.Kecamatan[] }) => {
                 {/* Modal Edit Data */}
                 <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
                     <DialogContent>
-                        <DialogTitle>Edit Kecamatan</DialogTitle>
-                        <form onSubmit={handleEditSubmit} className="space-y-4">
+                        <DialogTitle>Edit Kelurahan</DialogTitle>
+                        <form onSubmit={handleEditSubmit}>
                             <div>
-                                <Label htmlFor="nama_kecamatan">Nama Kecamatan</Label>
+                                <Label>Nama Kecamatan</Label>
+                                <Select value={editData.kecamatan_id} onValueChange={(value) => setEditData('kecamatan_id', value)}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Pilih Kecamatan" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {kecamatan.map((item) => (
+                                            <SelectItem key={item.id} value={String(item.id)}>
+                                                {item.nama_kecamatan}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {editErrors.kecamatan_id && <span className="text-sm text-red-500">{editErrors.kecamatan_id}</span>}
+                            </div>
+                            <div>
+                                <Label htmlFor="nama_kelurahan">Nama Kelurahan</Label>
                                 <Input
-                                    id="nama_kecamatan"
-                                    name="nama_kecamatan"
+                                    id="nama_kelurahan"
+                                    name="nama_kelurahan"
                                     type="text"
-                                    value={editData.nama_kecamatan}
-                                    onChange={(e) => setEditData('nama_kecamatan', e.target.value)}
+                                    value={editData.nama_kelurahan}
+                                    onChange={(e) => setEditData('nama_kelurahan', e.target.value)}
                                 />
-                                {editErrors.nama_kecamatan && <span className="text-sm text-red-500">{editErrors.nama_kecamatan}</span>}
+                                {editErrors.nama_kelurahan && <span className="text-sm text-red-500">{editErrors.nama_kelurahan}</span>}
                             </div>
                             <div className="flex justify-end">
                                 <Button type="submit" disabled={editProcessing}>

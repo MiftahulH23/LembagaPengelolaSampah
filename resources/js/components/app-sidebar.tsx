@@ -1,9 +1,8 @@
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
+import { SharedData, User, type NavItem } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
 import AppLogo from './app-logo';
 
@@ -16,6 +15,29 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Kecamatan',
         href: '/kecamatan',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Data KK',
+        href: '/menu',
+        icon: LayoutGrid,
+    },
+];
+
+const adminNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: '/dashboard',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Kecamatan',
+        href: '/kecamatan',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Kelurahan',
+        href: '/kelurahan',
         icon: LayoutGrid,
     },
     {
@@ -38,7 +60,16 @@ const footerNavItems: NavItem[] = [
     },
 ];
 
-export function AppSidebar() {
+
+
+export function AppSidebar({ ...props }) {
+    const { auth } = usePage<SharedData>().props;
+    const user = auth.user;
+    const role = user.role;
+    const menu = {
+        superadmin: adminNavItems,
+    };
+    console.log('User Role:', role);
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -54,7 +85,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={menu[role as keyof typeof menu]} />
             </SidebarContent>
 
             <SidebarFooter>
