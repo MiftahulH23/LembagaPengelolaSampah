@@ -14,6 +14,11 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
+        title: 'Kecamatan',
+        href: '/kecamatan',
+        icon: LayoutGrid,
+    },
+    {
         title: 'Data KK',
         href: '/menu',
         icon: LayoutGrid,

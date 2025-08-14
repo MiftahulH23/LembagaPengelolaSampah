@@ -77,7 +77,7 @@
     --destructive: oklch(0.6188 0.2376 25.7658);
     --destructive-foreground: oklch(1 0 0);
     --border: oklch(0.9317 0.0118 231.6594);
-    --input: oklch(0.9809 0.0025 228.7836);
+    --input: oklch(80.466% 0.00009 271.152);
     --ring: oklch(49.616% 0.00006 271.152);
     --chart-1: oklch(0.6723 0.1606 244.9955);
     --chart-2: oklch(0.6907 0.1554 160.3454);
@@ -253,4 +253,8 @@
     body {
         @apply bg-background text-foreground;
     }
+}
+/* style untuk h1 */
+h1 {
+    @apply text-2xl font-bold;
 }
