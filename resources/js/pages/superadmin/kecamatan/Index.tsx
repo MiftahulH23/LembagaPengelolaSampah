@@ -102,7 +102,20 @@ const Index = (props: { kecamatan: Wilayah.Kecamatan[] }) => {
                 <h1>Data Kecamatan</h1>
                 <DataTable columns={columns} data={kecamatan}>
                     {({ table }) => (
-                        <DataTableControls table={table} action={<Button onClick={() => setIsAddModalOpen(true)}>Tambah</Button>} search>
+                        <DataTableControls
+                            table={table}
+                            action={
+                                <Button
+                                    onClick={() => {
+                                        data.nama_kecamatan = '';
+                                        setIsAddModalOpen(true);
+                                    }}
+                                >
+                                    Tambah
+                                </Button>
+                            }
+                            search
+                        >
                             <DataTableFilter table={table} />
                         </DataTableControls>
                     )}
@@ -161,9 +174,9 @@ const Index = (props: { kecamatan: Wilayah.Kecamatan[] }) => {
                 <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
                     <DialogContent>
                         <div className="flex flex-col items-center justify-center gap-3">
-                            <TriangleAlert size={34} className="text-destructive" />
+                            <TriangleAlert size={48} className="text-destructive" />
                             <DialogTitle className="text-center">Konfirmasi Hapus</DialogTitle>
-                            <DialogDescription className='text-center'>Apakah Anda yakin ingin menghapus data ini?</DialogDescription>
+                            <DialogDescription className="text-center">Apakah Anda yakin ingin menghapus data ini?</DialogDescription>
                         </div>
                         <div className="mt-4 flex justify-center gap-2">
                             <Button variant="outline" onClick={() => setDeleteId(null)}>

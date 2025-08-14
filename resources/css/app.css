@@ -84,7 +84,7 @@
     --chart-3: oklch(0.8214 0.16 82.5337);
     --chart-4: oklch(0.7064 0.1822 151.7125);
     --chart-5: oklch(0.5919 0.2186 10.5826);
-    --radius: 1.3rem;
+    --radius: 0.8rem;
     --sidebar: #f0f8ff;
     --sidebar-foreground: oklch(0.1884 0.0128 248.5103);
     --sidebar-primary: oklch(0.6723 0.1606 244.9955);
@@ -148,7 +148,6 @@
     --sidebar-accent-foreground: oklch(1 0 0);
     --sidebar-border: oklch(0.32 0 0);
     --sidebar-ring: oklch(0.72 0 0);
-    --radius: 0.5rem;
     --font-sans: Geist, sans-serif;
     --font-serif: Georgia, serif;
     --font-mono: Geist Mono, monospace;
@@ -263,4 +262,7 @@ h1 {
 }
 form{
     @apply space-y-2;
+}
+input[type="search"] {
+    @apply [&::-webkit-search-cancel-button]:appearance-none;
 }

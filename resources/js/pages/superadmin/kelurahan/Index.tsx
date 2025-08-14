@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import AppLayout from '@/layouts/app-layout';
 import { Wilayah } from '@/types/data/wilayah';
 import { Head, router, useForm } from '@inertiajs/react';
-import { ColumnDef } from '@tanstack/react-table';
+import { ColumnDef, FilterFnOption } from '@tanstack/react-table';
+import { set } from 'date-fns';
 import { SquarePen, Trash2, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -38,8 +39,10 @@ const Index = (props: { kelurahan: Wilayah.Kelurahan[]; kecamatan: Wilayah.Kecam
             header: 'Nama Kelurahan',
         },
         {
+            id: 'kecamatan_id',
             accessorKey: 'kecamatan.nama_kecamatan',
             header: 'Nama Kecamatan',
+            filterFn: 'checkbox' as FilterFnOption<Wilayah.Kelurahan>,
         },
         {
             id: 'aksi',
@@ -108,6 +111,7 @@ const Index = (props: { kelurahan: Wilayah.Kelurahan[]; kecamatan: Wilayah.Kecam
             onError: () => toast.error('Gagal menghapus Kecamatan'),
         });
     };
+    const dataKecamatan = kecamatan.map((item) => item.nama_kecamatan);
     return (
         <AppLayout breadcrumbs={breadcrumb}>
             <Head title="Kelurahan" />
@@ -115,8 +119,30 @@ const Index = (props: { kelurahan: Wilayah.Kelurahan[]; kecamatan: Wilayah.Kecam
                 <h1>Data Kelurahan</h1>
                 <DataTable columns={columns} data={kelurahan}>
                     {({ table }) => (
-                        <DataTableControls table={table} action={<Button onClick={() => setIsAddModalOpen(true)}>Tambah</Button>} search>
-                            <DataTableFilter table={table} />
+                        <DataTableControls
+                            table={table}
+                            action={
+                                <Button
+                                    onClick={() => {
+                                        data.nama_kelurahan = '';
+                                        setIsAddModalOpen(true);
+                                    }}
+                                >
+                                    Tambah
+                                </Button>
+                            }
+                            search
+                        >
+                            <DataTableFilter
+                                table={table}
+                                extend={[
+                                    {
+                                        id: 'kecamatan_id',
+                                        label: 'Kecamatan',
+                                        data: dataKecamatan,
+                                    },
+                                ]}
+                            />
                         </DataTableControls>
                     )}
                 </DataTable>
@@ -206,9 +232,9 @@ const Index = (props: { kelurahan: Wilayah.Kelurahan[]; kecamatan: Wilayah.Kecam
                 <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
                     <DialogContent>
                         <div className="flex flex-col items-center justify-center gap-3">
-                            <TriangleAlert size={34} className="text-destructive" />
+                            <TriangleAlert size={48} className="text-destructive" />
                             <DialogTitle className="text-center">Konfirmasi Hapus</DialogTitle>
-                            <DialogDescription className='text-center'>Apakah Anda yakin ingin menghapus data ini?</DialogDescription>
+                            <DialogDescription className="text-center">Apakah Anda yakin ingin menghapus data ini?</DialogDescription>
                         </div>
                         <div className="mt-4 flex justify-center gap-2">
                             <Button variant="outline" onClick={() => setDeleteId(null)}>

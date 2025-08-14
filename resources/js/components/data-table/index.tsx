@@ -145,7 +145,7 @@ export function DataTable<Data, Value>(props: DataTable<Data, Value> & Omit<Reac
         {...rest}
       >
         <Table className={cn("bg-card", fixed && "table-fixed")}>
-          <TableHeader className="bg-primary/20 dark:bg-muted/30 overflow-hidden">
+          <TableHeader className="bg-sidebar dark:bg-muted/30 overflow-hidden">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
