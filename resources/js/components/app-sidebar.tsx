@@ -3,7 +3,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { SharedData, User, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { BookA, BookOpen, Folder, Landmark, Layers, LayoutGrid, Map } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -33,17 +33,17 @@ const adminNavItems: NavItem[] = [
     {
         title: 'Kecamatan',
         href: '/kecamatan',
-        icon: LayoutGrid,
+        icon: Layers,
     },
     {
         title: 'Kelurahan',
         href: '/kelurahan',
-        icon: LayoutGrid,
+        icon: Map,
     },
     {
         title: 'Data KK',
         href: '/menu',
-        icon: LayoutGrid,
+        icon: BookA,
     },
 ];
 
