@@ -18,8 +18,8 @@ class KartukeluargaController extends Controller
         $kartukeluarga = KartuKeluarga::with(['kecamatan', 'kelurahan'])
             ->orderBy('created_at', 'desc')
             ->get();
-            $kecamatan = Kecamatan::all();
-            $kelurahan = Kelurahan::all();
+        $kecamatan = Kecamatan::all();
+        $kelurahan = Kelurahan::all();
         return Inertia::render('superadmin/kartukeluarga/index', [
             'kartukeluarga' => $kartukeluarga,
             'kecamatan' => $kecamatan,
@@ -48,6 +48,27 @@ class KartukeluargaController extends Controller
             'rw' => 'required|string|max:5',
             'kelurahan_id' => 'required|exists:kelurahan,id',
             'kecamatan_id' => 'required|exists:kecamatan,id',
+        ], [
+            'nik.required' => 'NIK wajib diisi.',
+            'nik.string' => 'Format NIK harus berupa teks.',
+            'nik.max' => 'NIK tidak boleh lebih dari 16 karakter.',
+            'nik.unique' => 'NIK sudah terdaftar.',
+            'nama_kepala_keluarga.required' => 'Nama Kepala Keluarga wajib diisi.',
+            'nama_kepala_keluarga.string' => 'Nama Kepala Keluarga harus berupa teks.',
+            'nama_kepala_keluarga.max' => 'Nama Kepala Keluarga maksimal 100 karakter.',
+            'alamat.required' => 'Alamat wajib diisi.',
+            'alamat.string' => 'Alamat harus berupa teks.',
+            'alamat.max' => 'Alamat maksimal 255 karakter.',
+            'rt.required' => 'RT wajib diisi.',
+            'rt.string' => 'RT harus berupa teks.',
+            'rt.max' => 'RT maksimal 5 karakter.',
+            'rw.required' => 'RW wajib diisi.',
+            'rw.string' => 'RW harus berupa teks.',
+            'rw.max' => 'RW maksimal 5 karakter.',
+            'kelurahan_id.required' => 'Kelurahan wajib dipilih.',
+            'kelurahan_id.exists' => 'Kelurahan yang dipilih tidak valid.',
+            'kecamatan_id.required' => 'Kecamatan wajib dipilih.',
+            'kecamatan_id.exists' => 'Kecamatan yang dipilih tidak valid.',
         ]);
 
         KartuKeluarga::create($validated);
@@ -84,6 +105,27 @@ class KartukeluargaController extends Controller
             'rw' => 'required|string|max:5',
             'kelurahan_id' => 'required|exists:kelurahan,id',
             'kecamatan_id' => 'required|exists:kecamatan,id',
+        ], [
+            'nik.required' => 'NIK wajib diisi.',
+            'nik.string' => 'Format NIK harus berupa teks.',
+            'nik.max' => 'NIK tidak boleh lebih dari 16 karakter.',
+            'nik.unique' => 'NIK sudah terdaftar.',
+            'nama_kepala_keluarga.required' => 'Nama Kepala Keluarga wajib diisi.',
+            'nama_kepala_keluarga.string' => 'Nama Kepala Keluarga harus berupa teks.',
+            'nama_kepala_keluarga.max' => 'Nama Kepala Keluarga maksimal 100 karakter.',
+            'alamat.required' => 'Alamat wajib diisi.',
+            'alamat.string' => 'Alamat harus berupa teks.',
+            'alamat.max' => 'Alamat maksimal 255 karakter.',
+            'rt.required' => 'RT wajib diisi.',
+            'rt.string' => 'RT harus berupa teks.',
+            'rt.max' => 'RT maksimal 5 karakter.',
+            'rw.required' => 'RW wajib diisi.',
+            'rw.string' => 'RW harus berupa teks.',
+            'rw.max' => 'RW maksimal 5 karakter.',
+            'kelurahan_id.required' => 'Kelurahan wajib dipilih.',
+            'kelurahan_id.exists' => 'Kelurahan yang dipilih tidak valid.',
+            'kecamatan_id.required' => 'Kecamatan wajib dipilih.',
+            'kecamatan_id.exists' => 'Kecamatan yang dipilih tidak valid.',
         ]);
 
         KartuKeluarga::where('id', $id)->update($validated);
