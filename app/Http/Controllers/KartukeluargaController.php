@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\KartuKeluarga;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class KartukeluargaController extends Controller
 {
@@ -11,7 +13,13 @@ class KartukeluargaController extends Controller
      */
     public function index()
     {
-        //
+        $kartukeluarga = KartuKeluarga::with(['kecamatan', 'kelurahan'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+            // dd($kartukeluarga->toArray());
+        return Inertia::render('superadmin/kartukeluarga/index', [
+            'kartukeluarga' => $kartukeluarga,
+        ]);
     }
 
     /**

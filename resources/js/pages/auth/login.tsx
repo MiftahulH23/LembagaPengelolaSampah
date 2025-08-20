@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import AuthLayout from '@/layouts/auth-layout';
+import { toast } from 'sonner';
+// Pastikan AuthLayout tidak memberikan padding/margin yang berlebih jika kita ingin layoutnya full
 
 type LoginForm = {
     username: string;
@@ -32,79 +33,90 @@ export default function Login({ status, canResetPassword }: LoginProps) {
         e.preventDefault();
         post(route('login'), {
             onFinish: () => reset('password'),
+            onError: () => {
+                toast.error('Gagal masuk. Periksa kembali username dan password Anda.')
+            },
         });
     };
 
     return (
-        <AuthLayout title="Log in to your account" description="Enter your email and password below to log in">
-            <Head title="Log in" />
+        <div className="h-screen w-full bg-sidebar p-4">
+            <Head title="Masuk" />
+            <div className="h-full w-full overflow-hidden rounded-lg shadow-2xl md:grid lg:grid-cols-2">
+                <div className="hidden flex-col items-center justify-center p-12 lg:flex">
+                    {/* Ganti div ini dengan komponen gambar logo Anda */}
+                    <div className="mb-6 flex h-32 w-32 items-center justify-center rounded bg-white font-bold text-slate-500">Logo</div>
+                    <h1 className="text-2xl font-bold text-slate-800">Lembaga Pengelola Sampah</h1>
+                </div>
 
-            <form method="POST" className="flex flex-col gap-6" onSubmit={submit}>
-                <div className="grid gap-6">
-                    <div className="grid gap-2">
-                        <Label htmlFor="username">Username</Label>
-                        <Input
-                            id="username"
-                            type="text"
-                            required
-                            autoFocus
-                            tabIndex={1}
-                            autoComplete="username"
-                            value={data.username}
-                            onChange={(e) => setData('username', e.target.value)}
-                            placeholder="email@example.com"
-                        />
-                        <InputError message={errors.username} />
-                    </div>
+                <div className="shadow-4xl flex flex-col items-center justify-center rounded-xl bg-white p-8 sm:p-12">
+                    <div className="w-full max-w-sm">
+                        <h2 className="mb-8 text-center text-3xl font-bold">Masuk</h2>
 
-                    <div className="grid gap-2">
-                        <div className="flex items-center">
-                            <Label htmlFor="password">Password</Label>
-                            {canResetPassword && (
-                                <TextLink href={route('password.request')} className="ml-auto text-sm" tabIndex={5}>
-                                    Forgot password?
+                        <form method="POST" className="flex flex-col gap-5" onSubmit={submit}>
+                            <div className="grid gap-2">
+                                <Input
+                                    id="username"
+                                    type="text"
+                                    required
+                                    autoFocus
+                                    tabIndex={1}
+                                    value={data.username}
+                                    onChange={(e) => setData('username', e.target.value)}
+                                    placeholder="Username"
+                                    className="py-6" // Menambah tinggi input
+                                />
+                                <InputError message={errors.username} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    required
+                                    tabIndex={2}
+                                    value={data.password}
+                                    onChange={(e) => setData('password', e.target.value)}
+                                    placeholder="Password"
+                                    className="py-6" // Menambah tinggi input
+                                />
+                                <InputError message={errors.password} />
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="remember"
+                                        name="remember"
+                                        checked={data.remember}
+                                        onCheckedChange={(checked) => setData('remember', checked as boolean)}
+                                        tabIndex={3}
+                                    />
+                                    <Label htmlFor="remember">Ingat saya</Label>
+                                </div>
+                                {canResetPassword && (
+                                    <TextLink href={route('password.request')} tabIndex={5}>
+                                        Lupa password?
+                                    </TextLink>
+                                )}
+                            </div>
+
+                            <Button type="submit" className="mt-4 w-full py-6 text-base font-bold" tabIndex={4} disabled={processing}>
+                                {processing && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                                Masuk
+                            </Button>
+
+                            <div className="mt-4 text-center text-sm text-muted-foreground">
+                                Belum punya akun?{' '}
+                                <TextLink href={route('register')} tabIndex={5}>
+                                    Daftar
                                 </TextLink>
-                            )}
-                        </div>
-                        <Input
-                            id="password"
-                            type="password"
-                            required
-                            tabIndex={2}
-                            autoComplete="current-password"
-                            value={data.password}
-                            onChange={(e) => setData('password', e.target.value)}
-                            placeholder="Password"
-                        />
-                        <InputError message={errors.password} />
+                            </div>
+                        </form>
                     </div>
-
-                    <div className="flex items-center space-x-3">
-                        <Checkbox
-                            id="remember"
-                            name="remember"
-                            checked={data.remember}
-                            onClick={() => setData('remember', !data.remember)}
-                            tabIndex={3}
-                        />
-                        <Label htmlFor="remember">Remember me</Label>
-                    </div>
-
-                    <Button type="submit" className="mt-4 w-full" tabIndex={4} disabled={processing}>
-                        {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                        Log in
-                    </Button>
                 </div>
+            </div>
 
-                <div className="text-center text-sm text-muted-foreground">
-                    Don't have an account?{' '}
-                    <TextLink href={route('register')} tabIndex={5}>
-                        Sign up
-                    </TextLink>
-                </div>
-            </form>
-
-            {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
-        </AuthLayout>
+            {status && <div className="mt-4 text-center text-sm font-medium text-green-600">{status}</div>}
+        </div>
     );
 }

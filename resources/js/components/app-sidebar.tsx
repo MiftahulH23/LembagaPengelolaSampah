@@ -42,7 +42,7 @@ const adminNavItems: NavItem[] = [
     },
     {
         title: 'Data KK',
-        href: '/menu',
+        href: '/kartukeluarga',
         icon: BookA,
     },
 ];

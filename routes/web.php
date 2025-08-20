@@ -1,12 +1,13 @@
 <?php
 
+use App\Http\Controllers\KartukeluargaController;
 use App\Http\Controllers\KecamatanController;
 use App\Http\Controllers\KelurahanController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('welcome');
+    return Inertia::render('auth/login');
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -16,6 +17,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('kecamatan', KecamatanController::class);
     Route::resource('kelurahan', KelurahanController::class);
+    Route::resource('kartukeluarga', KartukeluargaController::class);
+
 });
 
 
