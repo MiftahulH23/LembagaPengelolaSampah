@@ -131,6 +131,7 @@ const Index = (props: { kecamatan: Wilayah.Kecamatan[] }) => {
                                     type="text"
                                     id="nama_kecamatan"
                                     name="nama_kecamatan"
+                                    placeholder='Masukkan nama kecamatan'
                                     value={data.nama_kecamatan}
                                     onChange={(e) => setData('nama_kecamatan', e.target.value)}
                                 />

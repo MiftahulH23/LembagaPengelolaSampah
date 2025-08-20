@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\KartuKeluarga;
+use App\Models\Kecamatan;
+use App\Models\Kelurahan;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -16,9 +18,12 @@ class KartukeluargaController extends Controller
         $kartukeluarga = KartuKeluarga::with(['kecamatan', 'kelurahan'])
             ->orderBy('created_at', 'desc')
             ->get();
-            // dd($kartukeluarga->toArray());
+            $kecamatan = Kecamatan::all();
+            $kelurahan = Kelurahan::all();
         return Inertia::render('superadmin/kartukeluarga/index', [
             'kartukeluarga' => $kartukeluarga,
+            'kecamatan' => $kecamatan,
+            'kelurahan' => $kelurahan,
         ]);
     }
 
@@ -35,7 +40,19 @@ class KartukeluargaController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'nik' => 'required|string|max:16|unique:kartu_keluarga,nik',
+            'nama_kepala_keluarga' => 'required|string|max:100',
+            'alamat' => 'required|string|max:255',
+            'rt' => 'required|string|max:5',
+            'rw' => 'required|string|max:5',
+            'kelurahan_id' => 'required|exists:kelurahan,id',
+            'kecamatan_id' => 'required|exists:kecamatan,id',
+        ]);
+
+        KartuKeluarga::create($validated);
+
+        return redirect()->route('kartukeluarga.index');
     }
 
     /**
@@ -59,7 +76,19 @@ class KartukeluargaController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validated = $request->validate([
+            'nik' => 'required|string|max:16|unique:kartu_keluarga,nik,' . $id,
+            'nama_kepala_keluarga' => 'required|string|max:100',
+            'alamat' => 'required|string|max:255',
+            'rt' => 'required|string|max:5',
+            'rw' => 'required|string|max:5',
+            'kelurahan_id' => 'required|exists:kelurahan,id',
+            'kecamatan_id' => 'required|exists:kecamatan,id',
+        ]);
+
+        KartuKeluarga::where('id', $id)->update($validated);
+
+        return redirect()->route('kartukeluarga.index');
     }
 
     /**
@@ -67,6 +96,8 @@ class KartukeluargaController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        KartuKeluarga::where('id', $id)->delete();
+
+        return redirect()->route('kartukeluarga.index');
     }
 }
