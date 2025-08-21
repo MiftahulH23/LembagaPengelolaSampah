@@ -18,4 +18,14 @@ class KartuKeluarga extends Model
     {
         return $this->belongsTo(Kecamatan::class);
     }
+
+    public function pembayaran()
+    {
+        return $this->hasMany(Pembayaran::class);
+    }
+
+    public function logPengambilanHariIni()
+{
+    return $this->hasOne(LogPengambilan::class);
+}
 }

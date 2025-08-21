@@ -216,7 +216,12 @@ const Index = (props: {
                             action={
                                 <Button
                                     onClick={() => {
-                                        reset();
+                                        data.nama_kepala_keluarga = '';
+                                        data.alamat = '';
+                                        data.rt = '';
+                                        data.rw = '';
+                                        data.kelurahan_id = '';
+                                        data.kecamatan_id = '';
                                         setIsAddModalOpen(true);
                                     }}
                                 >

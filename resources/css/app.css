@@ -68,7 +68,7 @@
     --popover-foreground: 9 oklch(0.1884 0.0128 248.5103);
     --primary: oklch(0.708 0.1489 234.3628);
     --primary-foreground: oklch(1 0 0);
-    --secondary: oklch(0.1884 0.0128 248.5103);
+    --secondary: oklch(0.6 0 0);
     --secondary-foreground: oklch(1 0 0);
     --muted: oklch(0.9222 0.0013 286.3737);
     --muted-foreground: oklch(0.1884 0.0128 248.5103);
@@ -255,14 +255,14 @@
 }
 /* style untuk h1 */
 h1 {
-    @apply text-2xl font-bold py-2;
+    @apply py-2 text-2xl font-bold;
 }
 .container {
-    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-4 space-y-4 py-3;
+    @apply mx-auto max-w-7xl space-y-4 px-4 py-3 sm:px-6 lg:px-4;
 }
-form{
+form {
     @apply space-y-2;
 }
-input[type="search"] {
+input[type='search'] {
     @apply [&::-webkit-search-cancel-button]:appearance-none;
 }

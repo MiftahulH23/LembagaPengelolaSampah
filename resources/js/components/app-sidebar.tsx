@@ -3,7 +3,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { SharedData, User, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookA, BookOpen, Folder, Landmark, Layers, LayoutGrid, Map } from 'lucide-react';
+import { BookA, BookOpen, Folder, HandCoins, Landmark, Layers, LayoutGrid, Map, Recycle } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -44,6 +44,16 @@ const adminNavItems: NavItem[] = [
         title: 'Data KK',
         href: '/kartukeluarga',
         icon: BookA,
+    },
+    {
+        title: 'Pembayaran Iuran',
+        href: '/pembayaran',
+        icon: HandCoins,
+    },
+    {
+        title: 'Pengambilan Sampah',
+        href: '/pengambilan-sampah',
+        icon: Recycle,
     },
 ];
 

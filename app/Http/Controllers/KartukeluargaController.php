@@ -20,7 +20,7 @@ class KartukeluargaController extends Controller
             ->get();
         $kecamatan = Kecamatan::all();
         $kelurahan = Kelurahan::all();
-        return Inertia::render('superadmin/kartukeluarga/index', [
+        return Inertia::render('superadmin/kartukeluarga/Index', [
             'kartukeluarga' => $kartukeluarga,
             'kecamatan' => $kecamatan,
             'kelurahan' => $kelurahan,

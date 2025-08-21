@@ -1,0 +1,118 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\KartuKeluarga;
+use App\Models\Pembayaran;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+
+class PembayaranController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
+    {
+        $selectedYear = $request->input('year', date('Y'));
+
+        // --- REVISI: Menyesuaikan nama kolom 'tahun' di query ---
+        $kartuKeluarga = KartuKeluarga::with([
+            'kelurahan',
+            'kecamatan',
+            'pembayaran' => function ($query) use ($selectedYear) {
+                $query->where('tahun', $selectedYear);
+            }
+        ])->orderBy('nama_kepala_keluarga')->get();
+
+        return Inertia::render('lps/pembayaran/Index', [
+            'kartuKeluarga' => $kartuKeluarga,
+            'selectedYear' => (int) $selectedYear,
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request, KartuKeluarga $kartuKeluarga)
+    {
+        // --- REVISI: Menyesuaikan aturan validasi ---
+        $request->validate([
+            'bulan' => 'required|array|min:1',
+            'bulan.*' => 'required|integer|between:1,12',
+            'tahun' => 'required|integer',
+            'tanggal' => 'required|date',
+            'jumlah' => 'required|numeric|min:0',
+            'catatan' => 'nullable|string|max:255',
+        ]);
+
+        // --- REVISI: Menyesuaikan pengecekan duplikasi ---
+        $bulanSudahDibayar = Pembayaran::where('kartu_keluarga_id', $kartuKeluarga->id)
+                                ->where('tahun', $request->tahun)
+                                ->whereIn('bulan', $request->bulan)
+                                ->pluck('bulan');
+
+        if ($bulanSudahDibayar->isNotEmpty()) {
+            return back()->withErrors(['bulan' => 'Bulan ' . $bulanSudahDibayar->implode(', ') . ' sudah pernah dibayar.']);
+        }
+
+        DB::transaction(function () use ($request, $kartuKeluarga) {
+            foreach ($request->bulan as $bulan) {
+                // --- REVISI: Menyesuaikan pembuatan data dengan kolom baru ---
+                Pembayaran::create([
+                    'kartu_keluarga_id' => $kartuKeluarga->id,
+                    'tahun' => $request->tahun,
+                    'bulan' => $bulan,
+                    'jumlah' => $request->jumlah,
+                    'tanggal' => $request->tanggal,
+                    'catatan' => $request->catatan,
+                    'diinput_oleh' => Auth::user()->username, // Mengambil nama user yang login
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Pembayaran berhasil disimpan.');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        //
+    }
+}
