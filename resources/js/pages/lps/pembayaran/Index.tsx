@@ -55,7 +55,7 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear }) =
         setIsPaymentModalOpen(true);
     };
 
-    const handlePaymentSubmit = (e: React.FormEvent) => {
+    const handlePaymentSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!selectedKK) return;
 

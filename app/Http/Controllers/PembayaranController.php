@@ -53,7 +53,7 @@ class PembayaranController extends Controller
             'tahun' => 'required|integer',
             'tanggal' => 'required|date',
             'jumlah' => 'required|numeric|min:0',
-            'catatan' => 'nullable|string|max:255',
+            'catatan' => 'required|string|max:255',
         ]);
 
         // --- REVISI: Menyesuaikan pengecekan duplikasi ---

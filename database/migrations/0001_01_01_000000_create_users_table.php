@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('nohp')->unique();
             $table->string('role');
             $table->string('password');
+            $table->string('email')->nullable();
+            $table->string('name')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

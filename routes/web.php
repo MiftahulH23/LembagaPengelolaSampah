@@ -8,9 +8,13 @@ use App\Http\Controllers\PengambilanSampahController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('auth/login');
-})->name('home');
+
+
+Route::middleware('guest')->group(function () {
+    Route::get('/', function () {
+        return Inertia::render('auth/login');
+    })->name('home');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
@@ -20,7 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('kecamatan', KecamatanController::class);
     Route::resource('kelurahan', KelurahanController::class);
     Route::resource('kartukeluarga', KartukeluargaController::class);
-    
+
     Route::get('/pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index');
     Route::post('/pembayaran/{kartuKeluarga}', [PembayaranController::class, 'store'])->name('pembayaran.store');
 
@@ -31,5 +35,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
-require __DIR__.'/settings.php';
-require __DIR__.'/auth.php';
+require __DIR__ . '/settings.php';
+require __DIR__ . '/auth.php';

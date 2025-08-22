@@ -345,7 +345,7 @@ const Index = (props: {
 
                 {/* Modal Edit Data */}
                 <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                    <DialogContent>
+                    <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
                         <DialogTitle>Edit Kartu Keluarga</DialogTitle>
                         <form onSubmit={handleEditSubmit} className="space-y-4">
                             {/* NIK */}

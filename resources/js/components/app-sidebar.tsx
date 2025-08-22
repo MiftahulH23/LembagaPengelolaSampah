@@ -3,7 +3,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { SharedData, User, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookA, BookOpen, Folder, HandCoins, Landmark, Layers, LayoutGrid, Map, Recycle } from 'lucide-react';
+import { BookA, BookOpen, Folder, HandCoins, Landmark, Layers, LayoutGrid, Map, Recycle, UserRoundPlus } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -55,6 +55,33 @@ const adminNavItems: NavItem[] = [
         href: '/pengambilan-sampah',
         icon: Recycle,
     },
+    {
+        title: 'Akun LPS',
+        href: '/register',
+        icon: UserRoundPlus,
+    },
+];
+const lpsNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: '/dashboard',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Data KK',
+        href: '/kartukeluarga',
+        icon: BookA,
+    },
+    {
+        title: 'Pembayaran Iuran',
+        href: '/pembayaran',
+        icon: HandCoins,
+    },
+    {
+        title: 'Pengambilan Sampah',
+        href: '/pengambilan-sampah',
+        icon: Recycle,
+    },
 ];
 
 const footerNavItems: NavItem[] = [
@@ -78,6 +105,7 @@ export function AppSidebar({ ...props }) {
     const role = user.role;
     const menu = {
         superadmin: adminNavItems,
+        lps: lpsNavItems,
     };
     console.log('User Role:', role);
     return (

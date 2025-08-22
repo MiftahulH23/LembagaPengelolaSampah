@@ -20,7 +20,11 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('auth/register');
+        $user = User::all();
+        // dd($user->toArray());
+        return Inertia::render('auth/register', [
+            'user' => $user
+        ]);
     }
 
     /**
@@ -32,9 +36,19 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'username' => 'required|string|max:255',
-            'nohp' => 'required|string|max:255',
+            'nohp' => 'required|string|max:255|unique:users,nohp',
             'role' => 'required|string|max:255',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ],[
+            'username.required' => 'Username wajib diisi',
+            'username.string' => 'Username harus berupa teks',
+            'username.max' => 'Username tidak boleh lebih dari 255 karakter',
+            'nohp.required' => 'No HP wajib diisi',
+            'nohp.unique' => 'No HP sudah terdaftar',
+            'role.required' => 'Role wajib diisi',
+            'password.required' => 'Password wajib diisi',
+            'password.min' => 'Password harus memiliki minimal 8 karakter',
+            'password.confirmed' => 'Konfirmasi password tidak cocok',
         ]);
 
         $user = User::create([
@@ -46,8 +60,7 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        Auth::login($user);
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return back()->with('success', 'User registered successfully.');
     }
 }
