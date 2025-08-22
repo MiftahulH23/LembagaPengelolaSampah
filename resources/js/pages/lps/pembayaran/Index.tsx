@@ -1,6 +1,6 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { DataTable, DataTableControls } from '@/components/data-table';
@@ -12,7 +12,161 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import { Check, HandCoins, X } from 'lucide-react';
+
+function DialogTambahPembayaran({
+    months,
+    selectedYear,
+    selectedKK,
+    isPaymentModalOpen, // Tambahkan prop ini
+    setIsPaymentModalOpen,
+}: {
+    months: string[];
+    selectedYear: number;
+    selectedKK: KartuKeluarga | null;
+    isPaymentModalOpen: boolean; // Tambahkan tipe prop ini
+    setIsPaymentModalOpen: (open: boolean) => void;
+}) {
+    // --- REVISI: Pindahkan getPaidMonths ke luar agar bisa diakses useEffect ---
+    const getPaidMonths = (kk: KartuKeluarga | null): number[] => {
+        if (!kk || !kk.pembayaran) return [];
+        return kk.pembayaran.map((item) => item.bulan);
+    };
+
+    const { data, setData, post, processing, errors, reset } = useForm({
+        bulan: [] as number[], // Inisialisasi dengan array kosong
+        tahun: selectedYear,
+        tanggal: new Date().toISOString().split('T')[0],
+        jumlah: 25000,
+        catatan: '',
+    });
+
+    // --- BEST PRACTICE: Gunakan useEffect untuk me-reset form saat modal dibuka ---
+    useEffect(() => {
+        if (isPaymentModalOpen && selectedKK) {
+            // Saat modal dibuka, reset form ke kondisi awal
+            reset();
+            // Lalu isi kembali data bulan yang sudah dibayar
+            setData({
+                bulan: [], // Mulai dengan bulan yang dipilih kosong
+                tahun: selectedYear,
+                tanggal: new Date().toISOString().split('T')[0],
+                jumlah: 25000,
+                catatan: '',
+            });
+        }
+    }, [isPaymentModalOpen, selectedKK, selectedYear]); // Dijalankan setiap kali nilai ini berubah
+
+    const handlePaymentSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!selectedKK) return;
+
+        const paidMonths = getPaidMonths(selectedKK);
+        const newMonthsToPay = data.bulan.filter((month) => !paidMonths.includes(month));
+
+        if (newMonthsToPay.length === 0) {
+            toast.info('Tidak ada bulan baru yang dipilih untuk dibayar.');
+            return;
+        }
+
+        // --- PERBAIKAN DI SINI ---
+        // 1. Update state 'data.bulan' dengan bulan yang baru saja akan dibayar
+        // Ini penting agar data yang dikirim oleh `post` adalah data yang benar
+        setData('bulan', newMonthsToPay);
+
+        // 2. Panggil `post` hanya dengan 2 argumen: URL dan Options
+        post(
+            route('pembayaran.store', selectedKK.id), // Argumen 1: URL
+            {
+                // Argumen 2: Options
+                preserveScroll: false,
+                onSuccess: () => {
+                    setIsPaymentModalOpen(false);
+                    toast.success('Pembayaran berhasil disimpan.');
+                },
+                onError: (formErrors: any) => {
+                    if (formErrors.bulan) {
+                        toast.error(formErrors.bulan);
+                    } else {
+                        toast.error('Gagal menyimpan pembayaran.');
+                    }
+                    setData('bulan', data.bulan);
+                },
+            },
+        );
+    };
+
+    const paidMonths = getPaidMonths(selectedKK);
+
+    return (
+        <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+                <DialogTitle>Input Pembayaran</DialogTitle>
+                <DialogDescription>
+                    Untuk: <strong>{selectedKK?.nama_kepala_keluarga}</strong> <br />
+                    Tahun Iuran: <strong>{selectedYear}</strong>
+                </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handlePaymentSubmit} className="space-y-4 py-4">
+                <div>
+                    <Label>Pilih Bulan yang Dibayar</Label>
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                        {months.map((monthName, index) => {
+                            const monthNumber = index + 1;
+                            const isAlreadyPaid = paidMonths.includes(monthNumber);
+
+                            return (
+                                <div key={monthNumber} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={`bulan-${monthNumber}`}
+                                        checked={data.bulan.includes(monthNumber)}
+                                        disabled={isAlreadyPaid}
+                                        onCheckedChange={(checked) => {
+                                            setData('bulan', checked ? [...data.bulan, monthNumber] : data.bulan.filter((m) => m !== monthNumber));
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor={`bulan-${monthNumber}`}
+                                        className={cn('text-sm leading-none font-medium', {
+                                            'cursor-not-allowed text-muted-foreground line-through decoration-red-500': isAlreadyPaid,
+                                        })}
+                                    >
+                                        {monthName}
+                                    </label>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    {errors.bulan && <p className="mt-1 text-sm text-red-500">{errors.bulan}</p>}
+                </div>
+
+                {/* Input lainnya tetap sama */}
+                <div>
+                    <Label htmlFor="tanggal">Tanggal Pembayaran</Label>
+                    <Input id="tanggal" type="date" value={data.tanggal} onChange={(e) => setData('tanggal', e.target.value)} />
+                    {errors.tanggal && <p className="mt-1 text-sm text-red-500">{errors.tanggal}</p>}
+                </div>
+                <div>
+                    <Label htmlFor="jumlah">Jumlah Iuran Per Bulan</Label>
+                    <Input id="jumlah" type="number" value={data.jumlah} onChange={(e) => setData('jumlah', Number(e.target.value))} disabled />
+                    {errors.jumlah && <p className="mt-1 text-sm text-red-500">{errors.jumlah}</p>}
+                </div>
+                <div>
+                    <Label htmlFor="catatan">Catatan (Opsional)</Label>
+                    <Textarea id="catatan" value={data.catatan} onChange={(e) => setData('catatan', e.target.value)} />
+                    {errors.catatan && <p className="mt-1 text-sm text-red-500">{errors.catatan}</p>}
+                </div>
+
+                <div className="mt-4 flex justify-end">
+                    <Button type="submit" disabled={processing || data.bulan.filter((m) => !paidMonths.includes(m)).length === 0}>
+                        {processing ? 'Menyimpan...' : `Simpan ${data.bulan.filter((m) => !paidMonths.includes(m)).length} Bulan`}
+                    </Button>
+                </div>
+            </form>
+        </DialogContent>
+    );
+}
 
 // --- REVISI: Menyesuaikan Tipe Data ---
 interface Pembayaran {
@@ -39,36 +193,9 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear }) =
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [selectedKK, setSelectedKK] = useState<KartuKeluarga | null>(null);
 
-    // --- REVISI: Menyesuaikan form state ---
-    const { data, setData, post, processing, errors, reset } = useForm({
-        bulan: [] as number[],
-        tahun: selectedYear,
-        tanggal: new Date().toISOString().split('T')[0],
-        jumlah: 25000, 
-        catatan: '',
-    });
-
     const openPaymentModal = (kk: KartuKeluarga) => {
         setSelectedKK(kk);
-        reset();
-        setData('tahun', selectedYear);
         setIsPaymentModalOpen(true);
-    };
-
-    const handlePaymentSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (!selectedKK) return;
-
-        post(route('pembayaran.store', selectedKK.id), {
-            preserveScroll: true,
-            onSuccess: () => {
-                setIsPaymentModalOpen(false);
-                toast.success('Pembayaran berhasil disimpan.');
-            },
-            onError: () => {
-                toast.error('Gagal menyimpan pembayaran.');
-            },
-        });
     };
 
     const getPaymentStatus = (kk: KartuKeluarga, month: number): boolean => {
@@ -105,10 +232,14 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear }) =
             id: 'aksi',
             header: 'Aksi',
             cell: ({ row }) => (
-                <Button variant="outline" size="sm" onClick={() => {
-                    data.bulan = [];
-                    openPaymentModal(row.original);
-                }}>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                        openPaymentModal(row.original);
+                        1;
+                    }}
+                >
                     <HandCoins className="mr-2 h-4 w-4" /> Bayar
                 </Button>
             ),
@@ -151,74 +282,14 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear }) =
                     )}
                 </DataTable>
             </div>
-
             <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>Input Pembayaran</DialogTitle>
-                        <DialogDescription>
-                            Untuk: <strong>{selectedKK?.nama_kepala_keluarga}</strong> <br />
-                            Tahun Iuran: <strong>{selectedYear}</strong>
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handlePaymentSubmit} className="space-y-4 py-4">
-                        <div>
-                            <Label>Pilih Bulan yang Dibayar</Label>
-                            <div className="mt-2 grid grid-cols-3 gap-2">
-                                {months.map((monthName, index) => {
-                                    const monthNumber = index + 1;
-                                    const isAlreadyPaid = selectedKK ? getPaymentStatus(selectedKK, monthNumber) : false;
-                                    return (
-                                        <div key={monthNumber} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={`bulan-${monthNumber}`}
-                                                checked={data.bulan.includes(monthNumber)}
-                                                disabled={isAlreadyPaid}
-                                                onCheckedChange={(checked) => {
-                                                    setData(
-                                                        'bulan',
-                                                        checked ? [...data.bulan, monthNumber] : data.bulan.filter((m) => m !== monthNumber),
-                                                    );
-                                                }}
-                                            />
-                                            <label
-                                                htmlFor={`bulan-${monthNumber}`}
-                                                className={`text-sm leading-none font-medium ${isAlreadyPaid ? 'cursor-not-allowed text-muted-foreground line-through' : 'cursor-pointer'}`}
-                                            >
-                                                {monthName}
-                                            </label>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            {errors.bulan && <p className="mt-1 text-sm text-red-500">{errors.bulan}</p>}
-                        </div>
-       
-                        <div>
-                            <Label htmlFor="tanggal">Tanggal Pembayaran</Label>
-                            <Input id="tanggal" type="date" value={data.tanggal} onChange={(e) => setData('tanggal', e.target.value)} />
-                            {errors.tanggal && <p className="mt-1 text-sm text-red-500">{errors.tanggal}</p>}
-                        </div>
-
-                        <div>
-                            <Label htmlFor="jumlah">Jumlah Iuran Per Bulan</Label>
-                            <Input id="jumlah" type="number" value={data.jumlah} onChange={(e) => setData('jumlah', Number(e.target.value))} disabled />
-                            {errors.jumlah && <p className="mt-1 text-sm text-red-500">{errors.jumlah}</p>}
-                        </div>
-
-                        <div>
-                            <Label htmlFor="catatan">Catatan (Opsional)</Label>
-                            <Textarea id="catatan" value={data.catatan} onChange={(e) => setData('catatan', e.target.value)} />
-                            {errors.catatan && <p className="mt-1 text-sm text-red-500">{errors.catatan}</p>}
-                        </div>
-
-                        <div className="mt-4 flex justify-end">
-                            <Button type="submit" disabled={processing || data.bulan.length === 0}>
-                                {processing ? 'Menyimpan...' : `Simpan ${data.bulan.length} Bulan`}
-                            </Button>
-                        </div>
-                    </form>
-                </DialogContent>
+                <DialogTambahPembayaran
+                    months={months}
+                    selectedYear={selectedYear}
+                    selectedKK={selectedKK}
+                    isPaymentModalOpen={isPaymentModalOpen} 
+                    setIsPaymentModalOpen={setIsPaymentModalOpen}
+                />
             </Dialog>
         </AppLayout>
     );

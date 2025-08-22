@@ -46,42 +46,52 @@ class PembayaranController extends Controller
      */
     public function store(Request $request, KartuKeluarga $kartuKeluarga)
     {
-        // --- REVISI: Menyesuaikan aturan validasi ---
         $request->validate([
             'bulan' => 'required|array|min:1',
             'bulan.*' => 'required|integer|between:1,12',
             'tahun' => 'required|integer',
             'tanggal' => 'required|date',
             'jumlah' => 'required|numeric|min:0',
-            'catatan' => 'required|string|max:255',
+            'catatan' => 'nullable|string|max:255',
         ]);
 
-        // --- REVISI: Menyesuaikan pengecekan duplikasi ---
+        // Pengecekan duplikasi tetap sama
         $bulanSudahDibayar = Pembayaran::where('kartu_keluarga_id', $kartuKeluarga->id)
-                                ->where('tahun', $request->tahun)
-                                ->whereIn('bulan', $request->bulan)
-                                ->pluck('bulan');
+            ->where('tahun', $request->tahun)
+            ->whereIn('bulan', $request->bulan)
+            ->pluck('bulan');
 
         if ($bulanSudahDibayar->isNotEmpty()) {
             return back()->withErrors(['bulan' => 'Bulan ' . $bulanSudahDibayar->implode(', ') . ' sudah pernah dibayar.']);
         }
 
-        DB::transaction(function () use ($request, $kartuKeluarga) {
-            foreach ($request->bulan as $bulan) {
-                // --- REVISI: Menyesuaikan pembuatan data dengan kolom baru ---
-                Pembayaran::create([
-                    'kartu_keluarga_id' => $kartuKeluarga->id,
-                    'tahun' => $request->tahun,
-                    'bulan' => $bulan,
-                    'jumlah' => $request->jumlah,
-                    'tanggal' => $request->tanggal,
-                    'catatan' => $request->catatan,
-                    'diinput_oleh' => Auth::user()->username, // Mengambil nama user yang login
-                ]);
-            }
-        });
+        // --- OPTIMASI: Siapkan data untuk bulk insert ---
+        $dataToInsert = [];
+        $now = now(); // Waktu saat ini untuk timestamp
+        $diinputOleh = Auth::user()->username;
 
-        return back()->with('success', 'Pembayaran berhasil disimpan.');
+        foreach ($request->bulan as $bulan) {
+            $dataToInsert[] = [
+                'kartu_keluarga_id' => $kartuKeluarga->id,
+                'tahun' => $request->tahun,
+                'bulan' => $bulan,
+                'jumlah' => $request->jumlah,
+                'tanggal' => $request->tanggal,
+                'catatan' => $request->catatan,
+                'diinput_oleh' => $diinputOleh,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        // --- BEST PRACTICE: Jalankan SATU query untuk semua data ---
+        if (!empty($dataToInsert)) {
+            Pembayaran::insert($dataToInsert);
+        }
+
+        // --- BEST PRACTICE: Redirect kembali untuk me-refresh props ---
+        return to_route('pembayaran.index', ['year' => $request->tahun])
+            ->with('success', 'Pembayaran berhasil disimpan.');
     }
 
     /**
