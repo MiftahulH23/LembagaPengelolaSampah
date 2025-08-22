@@ -16,7 +16,8 @@ class PembayaranController extends Controller
      */
     public function index(Request $request)
     {
-        $selectedYear = $request->input('year', date('Y'));
+        $yearNow = date('Y');
+        $selectedYear = $request->input('year', $yearNow);
 
         // --- REVISI: Menyesuaikan nama kolom 'tahun' di query ---
         $kartuKeluarga = KartuKeluarga::with([

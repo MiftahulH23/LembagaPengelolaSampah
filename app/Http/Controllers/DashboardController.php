@@ -20,27 +20,29 @@ class DashboardController extends Controller
 
         // --- 1. DATA STATISTIK UTAMA (KARTU) ---
         $totalKK = KartuKeluarga::count();
-
         $iuranPerBulanStatis = 25000;
         $potensiPemasukanTahunan = $totalKK * $iuranPerBulanStatis * 12;
-
         $pemasukanTahunIni = Pembayaran::where('tahun', $tahunIni)->sum('jumlah');
 
+        // ... (kode statistik lainnya tetap sama)
         $pembayaranBulanIni = Pembayaran::where('tahun', $tahunIni)->where('bulan', $bulanIni);
         $totalIuranBulanIni = $pembayaranBulanIni->sum('jumlah');
         $kkSudahBayarBulanIni = $pembayaranBulanIni->distinct('kartu_keluarga_id')->count();
         $persentaseSudahBayar = $totalKK > 0 ? ($kkSudahBayarBulanIni / $totalKK) * 100 : 0;
-
         $tanggalHariIni = Carbon::today()->toDateString();
         $kkSudahDiambilHariIni = LogPengambilan::where('tanggal_ambil', $tanggalHariIni)->count();
         $persentaseSudahDiambil = $totalKK > 0 ? ($kkSudahDiambilHariIni / $totalKK) * 100 : 0;
-
 
         // --- 2. DATA UNTUK GRAFIK IURAN TAHUNAN ---
         $iuranPerBulan = Pembayaran::where('tahun', $tahunIni)
             ->select(DB::raw('bulan as bulan'), DB::raw('SUM(jumlah) as total'))
             ->groupBy('bulan')->orderBy('bulan', 'asc')->get()
             ->mapWithKeys(fn($item) => [$item->bulan => $item->total]);
+
+        // --- REVISI: Hitung nilai maksimum untuk domain chart ---
+        $maxIuran = $iuranPerBulan->max();
+        // Buat buffer, bulatkan ke atas ke 20,000 terdekat agar skala terlihat bagus
+        $dataMaxIuran = $maxIuran > 0 ? (ceil($maxIuran / 20000) * 20000) : 80000; // default 80k jika belum ada data
 
         $grafikIuranData = [];
         for ($i = 1; $i <= 12; $i++) {
@@ -51,15 +53,14 @@ class DashboardController extends Controller
         }
 
         // --- 3. DATA UNTUK GRAFIK PENGAMBILAN SAMPAH MINGGUAN ---
-        $tanggalMulaiMinggu = Carbon::now()->startOfWeek();
-        $logMingguan = LogPengambilan::whereBetween('tanggal_ambil', [$tanggalMulaiMinggu, Carbon::now()->endOfWeek()])
+        $logMingguan = LogPengambilan::whereBetween('tanggal_ambil', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
             ->select(DB::raw('DATE(tanggal_ambil) as tanggal'), DB::raw('COUNT(*) as total'))
             ->groupBy('tanggal')->orderBy('tanggal', 'asc')->get()
             ->mapWithKeys(fn($item) => [$item->tanggal => $item->total]);
 
         $grafikPengambilanData = [];
         for ($i = 0; $i < 7; $i++) {
-            $tanggal = $tanggalMulaiMinggu->copy()->addDays($i);
+            $tanggal = Carbon::now()->startOfWeek()->copy()->addDays($i);
             $grafikPengambilanData[] = [
                 'name' => $tanggal->translatedFormat('D'),
                 'rumah' => $logMingguan->get($tanggal->toDateString(), 0),
@@ -77,6 +78,8 @@ class DashboardController extends Controller
             ],
             'grafikIuran' => $grafikIuranData,
             'grafikPengambilan' => $grafikPengambilanData,
+            // --- REVISI: Kirim dataMaxIuran sebagai prop baru ---
+            'dataMaxIuran' => $dataMaxIuran,
         ]);
     }
 }
