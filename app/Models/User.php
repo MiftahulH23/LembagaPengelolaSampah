@@ -22,6 +22,7 @@ class User extends Authenticatable
         'nohp',
         'password',
         'role',
+        'kecamatan_id',
     ];
 
     /**
@@ -46,4 +47,11 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function kecamatan()
+    {
+        return $this->belongsTo(Kecamatan::class);
+    }
+
+
 }

@@ -17,6 +17,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Wilayah } from '@/types/data/wilayah';
 
 // Definisikan tipe data untuk form, tambahkan 'role'
 type RegisterForm = {
@@ -25,18 +26,20 @@ type RegisterForm = {
     role: string; // Ditambahkan
     password: string;
     password_confirmation: string;
+    kecamatan_id: string;
 };
 
-export default function Register(props: { user: User[] }) {
-    const { user } = props;
+export default function Register(props: { user: User[]; kecamatan: Wilayah.Kecamatan[] }) {
+    const { user, kecamatan } = props;
     console.log('User Data:', user);
     // Tambahkan 'role' ke dalam state useForm
-    const { data, setData, post, processing, errors, reset } = useForm<RegisterForm>({
+    const { data, setData, post, processing, errors, reset } = useForm({
         username: '',
         nohp: '',
         role: '', // State awal untuk role
         password: '',
         password_confirmation: '',
+        kecamatan_id: '',
     });
 
     // Reset password fields setelah submit selesai
@@ -85,6 +88,12 @@ export default function Register(props: { user: User[] }) {
             accessorKey: 'role',
             header: 'Role',
         },
+        {
+            id: 'kecamatan',
+            accessorKey: 'kecamatan.nama_kecamatan',
+            header: 'Kecamatan',
+            cell: ({ row }) => row.original.kecamatan?.nama_kecamatan || '-',
+        }
     ];
     return (
         <AppLayout breadcrumbs={breadcrumb}>
@@ -165,6 +174,24 @@ export default function Register(props: { user: User[] }) {
                                         </SelectContent>
                                     </Select>
                                     <InputError message={errors.role} />
+                                </div>
+
+                                {/* Komponen Select untuk Kecamatan */}
+                                <div className="grid gap-2">
+                                    <Label htmlFor="kecamatan_id">Kecamatan</Label>
+                                    <Select required disabled={processing} value={data.kecamatan_id} onValueChange={(value) => setData('kecamatan_id', value)}>
+                                        <SelectTrigger id="kecamatan_id" tabIndex={3}>
+                                            <SelectValue placeholder="Pilih Kecamatan" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                           {kecamatan.map((item) => (
+                                               <SelectItem key={item.id} value={String(item.id)}>
+                                                   {item.nama_kecamatan}
+                                               </SelectItem>
+                                           ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={errors.kecamatan_id} />
                                 </div>
 
                                 {/* Input untuk Password */}

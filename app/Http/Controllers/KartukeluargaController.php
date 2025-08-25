@@ -15,10 +15,13 @@ class KartukeluargaController extends Controller
      */
     public function index()
     {
+        $kecamatanId = auth()->user()->kecamatan_id ?? null;
+
         $kartukeluarga = KartuKeluarga::with(['kecamatan', 'kelurahan'])
+            ->where('kecamatan_id', $kecamatanId)
             ->orderBy('created_at', 'desc')
             ->get();
-        $kecamatan = Kecamatan::all();
+        $kecamatan = Kecamatan::where('id', $kecamatanId)->get();
         $kelurahan = Kelurahan::all();
         return Inertia::render('superadmin/kartukeluarga/Index', [
             'kartukeluarga' => $kartukeluarga,

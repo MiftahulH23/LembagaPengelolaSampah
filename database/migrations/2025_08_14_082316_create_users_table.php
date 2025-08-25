@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('password');
             $table->string('email')->nullable();
             $table->string('name')->nullable();
+            $table->unsignedBigInteger('kecamatan_id')->nullable();
+            $table->foreign('kecamatan_id')->references('id')->on('kecamatan')->onDelete('set null');
             $table->rememberToken();
             $table->timestamps();
         });

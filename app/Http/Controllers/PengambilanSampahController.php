@@ -16,12 +16,18 @@ class PengambilanSampahController extends Controller
         // Validasi tanggal, jika tidak ada, gunakan tanggal hari ini
         $request->validate(['date' => 'nullable|date_format:Y-m-d']);
         $selectedDate = $request->input('date', Carbon::today()->toDateString());
+        $kecamatanId = auth()->user()->kecamatan_id ?? null;
 
         // Ambil semua KK dan status pengambilan HANYA untuk tanggal yang dipilih
         // Ini sangat efisien karena tidak mengambil semua riwayat log
-        $kartuKeluarga = KartuKeluarga::with(['kelurahan', 'kecamatan', 'logPengambilanHariIni' => function ($query) use ($selectedDate) {
-            $query->where('tanggal_ambil', $selectedDate);
-        }])->orderBy('nama_kepala_keluarga')->get();
+        $kartuKeluarga = KartuKeluarga::with([
+            'kelurahan',
+            'kecamatan',
+            'logPengambilanHariIni' => function ($query) use ($selectedDate) {
+                $query->where('tanggal_ambil', $selectedDate);
+            }
+        ])->where('kecamatan_id', $kecamatanId)
+            ->orderBy('nama_kepala_keluarga')->get();
 
         return Inertia::render('lps/pengambilan-sampah/Index', [
             'kartuKeluarga' => $kartuKeluarga,

@@ -10,4 +10,8 @@ class LogPengambilan extends Model
     protected $fillable = [
         'kartu_keluarga_id', 'tanggal_ambil', 'status', 'diinput_oleh'
     ];
+    public function kartuKeluarga()
+    {
+        return $this->belongsTo(KartuKeluarga::class);
+    }
 }

@@ -18,15 +18,18 @@ class PembayaranController extends Controller
     {
         $yearNow = date('Y');
         $selectedYear = $request->input('year', $yearNow);
+        $kecamatanId = auth()->user()->kecamatan_id ?? null;
 
-        // --- REVISI: Menyesuaikan nama kolom 'tahun' di query ---
+
         $kartuKeluarga = KartuKeluarga::with([
             'kelurahan',
             'kecamatan',
             'pembayaran' => function ($query) use ($selectedYear) {
                 $query->where('tahun', $selectedYear);
             }
-        ])->orderBy('nama_kepala_keluarga')->get();
+        ])->where('kecamatan_id', $kecamatanId)
+            ->orderBy('nama_kepala_keluarga')->get();
+        // dd($kartuKeluarga->toArray());
 
         return Inertia::render('lps/pembayaran/Index', [
             'kartuKeluarga' => $kartuKeluarga,

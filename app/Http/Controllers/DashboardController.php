@@ -17,27 +17,44 @@ class DashboardController extends Controller
     {
         $bulanIni = Carbon::now()->month;
         $tahunIni = Carbon::now()->year;
+        $kecamatanId = auth()->user()->kecamatan_id ?? null;
 
         // --- 1. DATA STATISTIK UTAMA (KARTU) ---
-        $totalKK = KartuKeluarga::count();
+        $totalKK = KartuKeluarga::where('kecamatan_id', $kecamatanId)->count();
         $iuranPerBulanStatis = 25000;
         $potensiPemasukanTahunan = $totalKK * $iuranPerBulanStatis * 12;
-        $pemasukanTahunIni = Pembayaran::where('tahun', $tahunIni)->sum('jumlah');
+        $pemasukanTahunIni = Pembayaran::whereHas('kartuKeluarga', function ($q) use ($kecamatanId) {
+            $q->where('kecamatan_id', $kecamatanId);
+        })->where('tahun', $tahunIni)->sum('jumlah');
 
-        // ... (kode statistik lainnya tetap sama)
-        $pembayaranBulanIni = Pembayaran::where('tahun', $tahunIni)->where('bulan', $bulanIni);
-        $totalIuranBulanIni = $pembayaranBulanIni->sum('jumlah');
-        $kkSudahBayarBulanIni = $pembayaranBulanIni->distinct('kartu_keluarga_id')->count();
+        $queryPembayaranBulanIni = Pembayaran::where('tahun', $tahunIni)
+            ->where('bulan', $bulanIni)
+            ->whereHas('kartuKeluarga', function ($q) use ($kecamatanId) {
+                $q->where('kecamatan_id', $kecamatanId);
+            });
+
+        // total iuran bulan ini (jumlah uang)
+        $totalIuranBulanIni = $queryPembayaranBulanIni->sum('jumlah');
+
+        // jumlah KK yang sudah bayar bulan ini (unik per kartu_keluarga)
+        $kkSudahBayarBulanIni = $queryPembayaranBulanIni->distinct('kartu_keluarga_id')->count('kartu_keluarga_id');
+
         $persentaseSudahBayar = $totalKK > 0 ? ($kkSudahBayarBulanIni / $totalKK) * 100 : 0;
         $tanggalHariIni = Carbon::today()->toDateString();
         $kkSudahDiambilHariIni = LogPengambilan::where('tanggal_ambil', $tanggalHariIni)->count();
         $persentaseSudahDiambil = $totalKK > 0 ? ($kkSudahDiambilHariIni / $totalKK) * 100 : 0;
 
         // --- 2. DATA UNTUK GRAFIK IURAN TAHUNAN ---
-        $iuranPerBulan = Pembayaran::where('tahun', $tahunIni)
+        $iuranPerBulan = Pembayaran::whereHas('kartuKeluarga', function ($q) use ($kecamatanId) {
+            $q->where('kecamatan_id', $kecamatanId);
+        })
+            ->where('tahun', $tahunIni)
             ->select(DB::raw('bulan as bulan'), DB::raw('SUM(jumlah) as total'))
-            ->groupBy('bulan')->orderBy('bulan', 'asc')->get()
+            ->groupBy('bulan')
+            ->orderBy('bulan', 'asc')
+            ->get()
             ->mapWithKeys(fn($item) => [$item->bulan => $item->total]);
+
 
         // --- REVISI: Hitung nilai maksimum untuk domain chart ---
         $maxIuran = $iuranPerBulan->max();
@@ -53,7 +70,9 @@ class DashboardController extends Controller
         }
 
         // --- 3. DATA UNTUK GRAFIK PENGAMBILAN SAMPAH MINGGUAN ---
-        $logMingguan = LogPengambilan::whereBetween('tanggal_ambil', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+        $logMingguan = LogPengambilan::whereHas('kartuKeluarga', function ($q) use ($kecamatanId) {
+                $q->where('kecamatan_id', $kecamatanId);
+            })->whereBetween('tanggal_ambil', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
             ->select(DB::raw('DATE(tanggal_ambil) as tanggal'), DB::raw('COUNT(*) as total'))
             ->groupBy('tanggal')->orderBy('tanggal', 'asc')->get()
             ->mapWithKeys(fn($item) => [$item->tanggal => $item->total]);
