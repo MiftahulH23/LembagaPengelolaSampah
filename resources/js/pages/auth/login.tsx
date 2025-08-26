@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import Trash from '@/assets/images/Trash.svg';
 // Pastikan AuthLayout tidak memberikan padding/margin yang berlebih jika kita ingin layoutnya full
 
 type LoginForm = {
@@ -45,7 +46,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
             <div className="h-full w-full overflow-hidden rounded-lg shadow-2xl md:grid lg:grid-cols-2">
                 <div className="hidden flex-col items-center justify-center p-12 lg:flex">
                     {/* Ganti div ini dengan komponen gambar logo Anda */}
-                    <div className="mb-6 flex h-32 w-32 items-center justify-center rounded bg-white font-bold text-slate-500">Logo</div>
+                    <div className="mb-6 flex h-32 w-32 items-center justify-center rounded bg-white font-bold text-slate-500"><img src={Trash} alt="" /></div>
                     <h1 className="text-2xl font-bold text-slate-800">Lembaga Pengelola Sampah</h1>
                 </div>
 
@@ -104,13 +105,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 {processing && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                                 Masuk
                             </Button>
-
-                            <div className="mt-4 text-center text-sm text-muted-foreground">
-                                Belum punya akun?{' '}
-                                <TextLink href={route('register')} tabIndex={5}>
-                                    Daftar
-                                </TextLink>
-                            </div>
                         </form>
                     </div>
                 </div>

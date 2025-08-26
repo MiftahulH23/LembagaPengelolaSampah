@@ -36,6 +36,8 @@ export interface User {
     username: string;
     nohp: string;
     avatar?: string;
+    name: string;
+    email: string;
     role: string;
     kecamatan_id?: number | null;
     kecamatan?: Wilayah.Kecamatan | null;

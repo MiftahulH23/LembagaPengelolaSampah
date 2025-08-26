@@ -41,21 +41,6 @@ const adminNavItems: NavItem[] = [
         icon: Map,
     },
     {
-        title: 'Data KK',
-        href: '/kartukeluarga',
-        icon: BookA,
-    },
-    {
-        title: 'Pembayaran Iuran',
-        href: '/pembayaran',
-        icon: HandCoins,
-    },
-    {
-        title: 'Pengambilan Sampah',
-        href: '/pengambilan-sampah',
-        icon: Recycle,
-    },
-    {
         title: 'Akun LPS',
         href: '/register',
         icon: UserRoundPlus,

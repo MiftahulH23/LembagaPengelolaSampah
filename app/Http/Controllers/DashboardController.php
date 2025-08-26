@@ -17,27 +17,43 @@ class DashboardController extends Controller
     {
         $bulanIni = Carbon::now()->month;
         $tahunIni = Carbon::now()->year;
-        $kecamatanId = auth()->user()->kecamatan_id ?? null;
+        $user = auth()->user();
+        $kecamatanId = optional($user)->kecamatan_id; // null jika tidak ada
 
-        // --- 1. DATA STATISTIK UTAMA (KARTU) ---
-        $totalKK = KartuKeluarga::where('kecamatan_id', $kecamatanId)->count();
+        // --- 1) DATA STATISTIK UTAMA (KARTU) ---
+        $totalKK = KartuKeluarga::when(
+            $kecamatanId,
+            fn($q) =>
+            $q->where('kecamatan_id', $kecamatanId)
+        )->count();
+
         $iuranPerBulanStatis = 25000;
         $potensiPemasukanTahunan = $totalKK * $iuranPerBulanStatis * 12;
-        $pemasukanTahunIni = Pembayaran::whereHas('kartuKeluarga', function ($q) use ($kecamatanId) {
-            $q->where('kecamatan_id', $kecamatanId);
-        })->where('tahun', $tahunIni)->sum('jumlah');
 
+        $pemasukanTahunIni = Pembayaran::when(
+            $kecamatanId,
+            fn($q) =>
+            $q->whereHas('kartuKeluarga', fn($k) => $k->where('kecamatan_id', $kecamatanId))
+        )
+            ->where('tahun', $tahunIni)
+            ->sum('jumlah');
+
+        // --- 2) DATA BULAN INI ---
         $queryPembayaranBulanIni = Pembayaran::where('tahun', $tahunIni)
             ->where('bulan', $bulanIni)
-            ->whereHas('kartuKeluarga', function ($q) use ($kecamatanId) {
-                $q->where('kecamatan_id', $kecamatanId);
-            });
+            ->when(
+                $kecamatanId,
+                fn($q) =>
+                $q->whereHas('kartuKeluarga', fn($k) => $k->where('kecamatan_id', $kecamatanId))
+            );
 
         // total iuran bulan ini (jumlah uang)
-        $totalIuranBulanIni = $queryPembayaranBulanIni->sum('jumlah');
+        $totalIuranBulanIni = (clone $queryPembayaranBulanIni)->sum('jumlah');
 
-        // jumlah KK yang sudah bayar bulan ini (unik per kartu_keluarga)
-        $kkSudahBayarBulanIni = $queryPembayaranBulanIni->distinct('kartu_keluarga_id')->count('kartu_keluarga_id');
+        // jumlah KK unik yang sudah bayar bulan ini
+        $kkSudahBayarBulanIni = (clone $queryPembayaranBulanIni)
+            ->distinct()
+            ->count('kartu_keluarga_id');
 
         $persentaseSudahBayar = $totalKK > 0 ? ($kkSudahBayarBulanIni / $totalKK) * 100 : 0;
         $tanggalHariIni = Carbon::today()->toDateString();
@@ -45,9 +61,11 @@ class DashboardController extends Controller
         $persentaseSudahDiambil = $totalKK > 0 ? ($kkSudahDiambilHariIni / $totalKK) * 100 : 0;
 
         // --- 2. DATA UNTUK GRAFIK IURAN TAHUNAN ---
-        $iuranPerBulan = Pembayaran::whereHas('kartuKeluarga', function ($q) use ($kecamatanId) {
-            $q->where('kecamatan_id', $kecamatanId);
-        })
+        $iuranPerBulan = Pembayaran::when(
+            $kecamatanId,
+            fn($q) =>
+            $q->whereHas('kartuKeluarga', fn($k) => $k->where('kecamatan_id', $kecamatanId))
+        )
             ->where('tahun', $tahunIni)
             ->select(DB::raw('bulan as bulan'), DB::raw('SUM(jumlah) as total'))
             ->groupBy('bulan')
@@ -70,9 +88,11 @@ class DashboardController extends Controller
         }
 
         // --- 3. DATA UNTUK GRAFIK PENGAMBILAN SAMPAH MINGGUAN ---
-        $logMingguan = LogPengambilan::whereHas('kartuKeluarga', function ($q) use ($kecamatanId) {
-                $q->where('kecamatan_id', $kecamatanId);
-            })->whereBetween('tanggal_ambil', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+        $logMingguan = LogPengambilan::when(
+            $kecamatanId,
+            fn($q) =>
+            $q->whereHas('kartuKeluarga', fn($k) => $k->where('kecamatan_id', $kecamatanId))
+        )->whereBetween('tanggal_ambil', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
             ->select(DB::raw('DATE(tanggal_ambil) as tanggal'), DB::raw('COUNT(*) as total'))
             ->groupBy('tanggal')->orderBy('tanggal', 'asc')->get()
             ->mapWithKeys(fn($item) => [$item->tanggal => $item->total]);

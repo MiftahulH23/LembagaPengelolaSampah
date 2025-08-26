@@ -27,9 +27,13 @@ type ProfileForm = {
 export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
     const { auth } = usePage<SharedData>().props;
 
-    const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
-        name: auth.user.name,
-        email: auth.user.email,
+    const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<ProfileForm>({
+        // --- PERBAIKAN SEMENTARA ---
+        // Kita melakukan 'casting' dengan `as string` untuk memberitahu TypeScript
+        // agar mempercayai bahwa data ini adalah string.
+        // Ini akan menghilangkan error, tapi solusi permanen di atas lebih baik.
+        name: auth.user.name as string,
+        email: auth.user.email as string,
     });
 
     const submit: FormEventHandler = (e) => {
