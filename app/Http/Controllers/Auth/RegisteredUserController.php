@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kecamatan;
+use App\Models\Kelurahan;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -21,11 +22,11 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        $user = User::with('kecamatan')->get();
-        $kecamatan = Kecamatan::select('id', 'nama_kecamatan')->get();
+        $user = User::with('kelurahan')->get();
+        $kelurahan = Kelurahan::select('id', 'nama_kelurahan')->get();
         return Inertia::render('auth/register', [
             'user' => $user,
-            'kecamatan' => $kecamatan
+            'kelurahan' => $kelurahan
         ]);
     }
 
@@ -41,7 +42,7 @@ class RegisteredUserController extends Controller
             'nohp' => 'required|string|max:255|unique:users,nohp',
             'role' => 'required|string|max:255',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'kecamatan_id' => 'nullable|exists:kecamatan,id',
+            'kelurahan_id' => 'nullable|exists:kelurahan,id',
         ], [
             'username.required' => 'Username wajib diisi',
             'username.string' => 'Username harus berupa teks',
@@ -58,7 +59,7 @@ class RegisteredUserController extends Controller
             'username' => $request->username,
             'nohp' => $request->nohp,
             'role' => $request->role,
-            'kecamatan_id' => $request->kecamatan_id,
+            'kelurahan_id' => $request->kelurahan_id,
             'password' => Hash::make($request->password),
         ]);
 

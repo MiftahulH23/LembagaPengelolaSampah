@@ -18,22 +18,22 @@ class DashboardController extends Controller
         $bulanIni = Carbon::now()->month;
         $tahunIni = Carbon::now()->year;
         $user = auth()->user();
-        $kecamatanId = optional($user)->kecamatan_id; // null jika tidak ada
+        $kelurahanId = optional($user)->kelurahan_id; // null jika tidak ada
 
         // --- 1) DATA STATISTIK UTAMA (KARTU) ---
         $totalKK = KartuKeluarga::when(
-            $kecamatanId,
+            $kelurahanId,
             fn($q) =>
-            $q->where('kecamatan_id', $kecamatanId)
+            $q->where('kelurahan_id', $kelurahanId)
         )->count();
 
         $iuranPerBulanStatis = 25000;
         $potensiPemasukanTahunan = $totalKK * $iuranPerBulanStatis * 12;
 
         $pemasukanTahunIni = Pembayaran::when(
-            $kecamatanId,
+            $kelurahanId,
             fn($q) =>
-            $q->whereHas('kartuKeluarga', fn($k) => $k->where('kecamatan_id', $kecamatanId))
+            $q->whereHas('kartuKeluarga', fn($k) => $k->where('kelurahan_id', $kelurahanId))
         )
             ->where('tahun', $tahunIni)
             ->sum('jumlah');
@@ -42,9 +42,9 @@ class DashboardController extends Controller
         $queryPembayaranBulanIni = Pembayaran::where('tahun', $tahunIni)
             ->where('bulan', $bulanIni)
             ->when(
-                $kecamatanId,
+                $kelurahanId,
                 fn($q) =>
-                $q->whereHas('kartuKeluarga', fn($k) => $k->where('kecamatan_id', $kecamatanId))
+                $q->whereHas('kartuKeluarga', fn($k) => $k->where('kelurahan_id', $kelurahanId))
             );
 
         // total iuran bulan ini (jumlah uang)
@@ -62,9 +62,9 @@ class DashboardController extends Controller
 
         // --- 2. DATA UNTUK GRAFIK IURAN TAHUNAN ---
         $iuranPerBulan = Pembayaran::when(
-            $kecamatanId,
+            $kelurahanId,
             fn($q) =>
-            $q->whereHas('kartuKeluarga', fn($k) => $k->where('kecamatan_id', $kecamatanId))
+            $q->whereHas('kartuKeluarga', fn($k) => $k->where('kelurahan_id', $kelurahanId))
         )
             ->where('tahun', $tahunIni)
             ->select(DB::raw('bulan as bulan'), DB::raw('SUM(jumlah) as total'))
@@ -89,9 +89,9 @@ class DashboardController extends Controller
 
         // --- 3. DATA UNTUK GRAFIK PENGAMBILAN SAMPAH MINGGUAN ---
         $logMingguan = LogPengambilan::when(
-            $kecamatanId,
+            $kelurahanId,
             fn($q) =>
-            $q->whereHas('kartuKeluarga', fn($k) => $k->where('kecamatan_id', $kecamatanId))
+            $q->whereHas('kartuKeluarga', fn($k) => $k->where('kelurahan_id', $kelurahanId))
         )->whereBetween('tanggal_ambil', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
             ->select(DB::raw('DATE(tanggal_ambil) as tanggal'), DB::raw('COUNT(*) as total'))
             ->groupBy('tanggal')->orderBy('tanggal', 'asc')->get()

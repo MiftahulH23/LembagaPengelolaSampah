@@ -26,11 +26,11 @@ type RegisterForm = {
     role: string; // Ditambahkan
     password: string;
     password_confirmation: string;
-    kecamatan_id: string;
+    kelurahan_id: string;
 };
 
-export default function Register(props: { user: User[]; kecamatan: Wilayah.Kecamatan[] }) {
-    const { user, kecamatan } = props;
+export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelurahan[] }) {
+    const { user, kelurahan } = props;
     console.log('User Data:', user);
     // Tambahkan 'role' ke dalam state useForm
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -39,7 +39,7 @@ export default function Register(props: { user: User[]; kecamatan: Wilayah.Kecam
         role: '', // State awal untuk role
         password: '',
         password_confirmation: '',
-        kecamatan_id: '',
+        kelurahan_id: '',
     });
 
     // Reset password fields setelah submit selesai
@@ -90,9 +90,9 @@ export default function Register(props: { user: User[]; kecamatan: Wilayah.Kecam
         },
         {
             id: 'kecamatan',
-            accessorKey: 'kecamatan.nama_kecamatan',
-            header: 'Kecamatan',
-            cell: ({ row }) => row.original.kecamatan?.nama_kecamatan || '-',
+            accessorKey: 'kelurahan.nama_kelurahan',
+            header: 'Kelurahan',
+            cell: ({ row }) => row.original.kelurahan?.nama_kelurahan || '-',
         }
     ];
     return (
@@ -178,20 +178,20 @@ export default function Register(props: { user: User[]; kecamatan: Wilayah.Kecam
 
                                 {/* Komponen Select untuk Kecamatan */}
                                 <div className="grid gap-2">
-                                    <Label htmlFor="kecamatan_id">Kecamatan</Label>
-                                    <Select required disabled={processing} value={data.kecamatan_id} onValueChange={(value) => setData('kecamatan_id', value)}>
-                                        <SelectTrigger id="kecamatan_id" tabIndex={3}>
-                                            <SelectValue placeholder="Pilih Kecamatan" />
+                                    <Label htmlFor="kelurahan_id">Kelurahan</Label>
+                                    <Select required disabled={processing} value={data.kelurahan_id} onValueChange={(value) => setData('kelurahan_id', value)}>
+                                        <SelectTrigger id="kelurahan_id" tabIndex={3}>
+                                            <SelectValue placeholder="Pilih Kelurahan" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                           {kecamatan.map((item) => (
+                                           {kelurahan.map((item) => (
                                                <SelectItem key={item.id} value={String(item.id)}>
-                                                   {item.nama_kecamatan}
+                                                   {item.nama_kelurahan}
                                                </SelectItem>
                                            ))}
                                         </SelectContent>
                                     </Select>
-                                    <InputError message={errors.kecamatan_id} />
+                                    <InputError message={errors.kelurahan_id} />
                                 </div>
 
                                 {/* Input untuk Password */}

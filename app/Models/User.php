@@ -22,7 +22,7 @@ class User extends Authenticatable
         'nohp',
         'password',
         'role',
-        'kecamatan_id',
+        'kelurahan_id',
         'name',
         'email',
     ];
@@ -50,9 +50,9 @@ class User extends Authenticatable
         ];
     }
 
-    public function kecamatan()
+    public function kelurahan()
     {
-        return $this->belongsTo(Kecamatan::class);
+        return $this->belongsTo(Kelurahan::class);
     }
 
 

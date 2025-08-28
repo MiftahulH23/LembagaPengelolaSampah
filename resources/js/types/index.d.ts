@@ -39,8 +39,8 @@ export interface User {
     name: string;
     email: string;
     role: string;
-    kecamatan_id?: number | null;
-    kecamatan?: Wilayah.Kecamatan | null;
+    kelurahan_id?: number | null;
+    kelurahan?: Wilayah.Kelurahan | null;
     email_verified_at: string | null;
     created_at: string;
     updated_at: string;

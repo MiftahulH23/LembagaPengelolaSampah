@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('iuran', function (Blueprint $table) {
             $table->id();
+            $table->integer('nominal_iuran');
             $table->timestamps();
         });
     }

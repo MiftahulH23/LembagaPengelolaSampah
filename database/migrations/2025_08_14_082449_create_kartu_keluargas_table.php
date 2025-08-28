@@ -17,11 +17,13 @@ return new class extends Migration
             $table->foreign('kecamatan_id')->references('id')->on('kecamatan')->onDelete('cascade');
             $table->unsignedBigInteger('kelurahan_id');
             $table->foreign('kelurahan_id')->references('id')->on('kelurahan')->onDelete('cascade');
+            $table->string('nomor_kk')->unique();
             $table->string('nik')->unique();
             $table->string('nama_kepala_keluarga');
             $table->string('alamat');
             $table->string('rt');
             $table->string('rw');
+            $table->string('zona');
             $table->timestamps();
         });
     }
