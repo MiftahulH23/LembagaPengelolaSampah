@@ -190,7 +190,7 @@ const Index = (props: { kelurahan: Wilayah.Kelurahan[]; kecamatan: Wilayah.Kecam
 
                 {/* Modal Edit Data */}
                 <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                    <DialogContent>
+                    <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
                         <DialogTitle>Edit Kelurahan</DialogTitle>
                         <form onSubmit={handleEditSubmit}>
                             <div>

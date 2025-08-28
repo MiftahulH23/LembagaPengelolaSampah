@@ -328,7 +328,7 @@ const Index = (props: { kartukeluarga: KartuKeluarga.Default[]; kecamatan: Kecam
 
                 {/* Modal Edit Data */}
                 <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                    <DialogContent className="sm:max-w-2xl">
+                    <DialogContent className="sm:max-w-2xl" onOpenAutoFocus={(e) => e.preventDefault()}>
                         <DialogTitle>Edit Kartu Keluarga</DialogTitle>
                         <form onSubmit={handleEditSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

@@ -148,7 +148,7 @@ const Index = (props: { kecamatan: Wilayah.Kecamatan[] }) => {
 
                 {/* Modal Edit Data */}
                 <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                    <DialogContent>
+                    <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
                         <DialogTitle>Edit Kecamatan</DialogTitle>
                         <form onSubmit={handleEditSubmit} className="space-y-4">
                             <div>
