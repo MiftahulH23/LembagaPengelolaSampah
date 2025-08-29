@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\IuranController;
 use App\Http\Controllers\KartukeluargaController;
 use App\Http\Controllers\KecamatanController;
 use App\Http\Controllers\KelurahanController;
@@ -23,6 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('kecamatan', KecamatanController::class);
     Route::resource('kelurahan', KelurahanController::class);
     Route::resource('kartukeluarga', KartukeluargaController::class);
+    Route::resource('iuran', IuranController::class);
 
     Route::get('/pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index');
     Route::post('/pembayaran/{kartuKeluarga}', [PembayaranController::class, 'store'])->name('pembayaran.store');
