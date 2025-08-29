@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('kartu_keluarga_id');
             $table->foreign('kartu_keluarga_id')->references('id')->on('kartu_keluarga')->onDelete('cascade');
+            $table->unsignedBigInteger('iuran_id');
+            $table->foreign('iuran_id')->references('id')->on('iuran')->onDelete('cascade');
             $table->string('tahun');
             $table->integer('bulan');
             $table->decimal('jumlah', 10, 2);

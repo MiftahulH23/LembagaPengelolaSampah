@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Iuran;
 use App\Models\KartuKeluarga;
 use App\Models\Pembayaran;
 use Illuminate\Http\Request;
@@ -16,27 +17,28 @@ class PembayaranController extends Controller
      */
     public function index(Request $request)
     {
-        $yearNow = date('Y');
-        $selectedYear = $request->input('year', $yearNow);
-        $kecamatanId = auth()->user()->kecamatan_id ?? null;
-
+        $selectedYear = $request->input('year', date('Y'));
+        $kelurahanId = auth()->user()->kelurahan_id ?? null;
 
         $kartuKeluarga = KartuKeluarga::with([
             'kelurahan',
             'kecamatan',
-            'pembayaran' => function ($query) use ($selectedYear) {
-                $query->where('tahun', $selectedYear);
-            }
-        ])->where('kecamatan_id', $kecamatanId)
+            'pembayaran' => fn($q) => $q->where('tahun', $selectedYear)
+        ])
+            ->where('kelurahan_id', $kelurahanId)
             ->orderBy('nama_kepala_keluarga')->get();
-        // dd($kartuKeluarga->toArray());
+
+        // REVISI: Ambil data iuran terbaru untuk kelurahan yang login
+        $iuranTerbaru = Iuran::where('kelurahan_id', $kelurahanId)
+            ->orderBy('created_at', 'desc')
+            ->first();
 
         return Inertia::render('lps/pembayaran/Index', [
             'kartuKeluarga' => $kartuKeluarga,
             'selectedYear' => (int) $selectedYear,
+            'iuranTerbaru' => $iuranTerbaru, // Kirim iuran terbaru sebagai prop
         ]);
     }
-
     /**
      * Show the form for creating a new resource.
      */
@@ -55,11 +57,16 @@ class PembayaranController extends Controller
             'bulan.*' => 'required|integer|between:1,12',
             'tahun' => 'required|integer',
             'tanggal' => 'required|date',
-            'jumlah' => 'required|numeric|min:0',
             'catatan' => 'nullable|string|max:255',
         ]);
 
-        // Pengecekan duplikasi tetap sama
+        // REVISI: Ambil iuran terbaru dari database, bukan dari request
+        $iuran = Iuran::where('kelurahan_id', $kartuKeluarga->kelurahan_id)
+            ->orderBy('created_at', 'desc')
+            ->firstOrFail();
+
+            dd($iuran->toArray()); // Gagal jika tidak ada iuran yang terdaftar untuk kelurahan tsb
+
         $bulanSudahDibayar = Pembayaran::where('kartu_keluarga_id', $kartuKeluarga->id)
             ->where('tahun', $request->tahun)
             ->whereIn('bulan', $request->bulan)
@@ -69,17 +76,17 @@ class PembayaranController extends Controller
             return back()->withErrors(['bulan' => 'Bulan ' . $bulanSudahDibayar->implode(', ') . ' sudah pernah dibayar.']);
         }
 
-        // --- OPTIMASI: Siapkan data untuk bulk insert ---
         $dataToInsert = [];
-        $now = now(); // Waktu saat ini untuk timestamp
+        $now = now();
         $diinputOleh = Auth::user()->username;
 
         foreach ($request->bulan as $bulan) {
             $dataToInsert[] = [
                 'kartu_keluarga_id' => $kartuKeluarga->id,
+                'iuran_id' => $iuran->id, // Simpan ID iuran yang digunakan
                 'tahun' => $request->tahun,
                 'bulan' => $bulan,
-                'jumlah' => $request->jumlah,
+                'jumlah' => $iuran->nominal_iuran, // Gunakan nominal dari iuran
                 'tanggal' => $request->tanggal,
                 'catatan' => $request->catatan,
                 'diinput_oleh' => $diinputOleh,
@@ -88,12 +95,10 @@ class PembayaranController extends Controller
             ];
         }
 
-        // --- BEST PRACTICE: Jalankan SATU query untuk semua data ---
         if (!empty($dataToInsert)) {
             Pembayaran::insert($dataToInsert);
         }
 
-        // --- BEST PRACTICE: Redirect kembali untuk me-refresh props ---
         return to_route('pembayaran.index', ['year' => $request->tahun])
             ->with('success', 'Pembayaran berhasil disimpan.');
     }

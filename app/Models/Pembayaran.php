@@ -14,4 +14,8 @@ class Pembayaran extends Model
     {
         return $this->belongsTo(KartuKeluarga::class);
     }
+
+    public function iuran() {
+        return $this->belongsTo(Iuran::class);
+    }
 }
