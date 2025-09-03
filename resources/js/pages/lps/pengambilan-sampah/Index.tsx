@@ -1,5 +1,6 @@
 import { Head, router } from '@inertiajs/react';
-import { ColumnDef } from '@tanstack/react-table';
+// REVISI: Import hook dan tipe dari tanstack/react-table
+import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import React from 'react';
 import { toast } from 'sonner';
 
@@ -8,140 +9,98 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
-import { Check, Recycle, Undo2 } from 'lucide-react';
+import { CalendarX2, Check, Recycle, Undo2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // --- Tipe Data ---
-interface LogPengambilan {
-    id: number;
-    tanggal_ambil: string;
-    status: string;
-}
-
-interface KartuKeluarga {
-    id: number;
-    nama_kepala_keluarga: string;
-    alamat: string;
-    rt: string;
-    rw: string;
-    // Relasi yang di-load dari controller
-    log_pengambilan_hari_ini: LogPengambilan | null;
+interface ChecklistItem {
+    zona: string;
+    status: 'Sudah Diambil' | 'Menunggu';
 }
 
 interface PageProps {
-    kartuKeluarga: KartuKeluarga[];
+    checklistData: ChecklistItem[];
     selectedDate: string;
 }
 
-const PengambilanSampahIndex: React.FC<PageProps> = ({ kartuKeluarga: initialKartuKeluarga, selectedDate }) => {
-    // State untuk Optimistic UI
-    const [kkData, setKkData] = React.useState(initialKartuKeluarga);
+const PengambilanSampahIndex: React.FC<PageProps> = ({ checklistData: initialChecklist, selectedDate }) => {
+    const [checklist, setChecklist] = React.useState(initialChecklist);
 
-    // Sinkronisasi state jika props dari Inertia berubah (misal saat ganti tanggal)
     React.useEffect(() => {
-        setKkData(initialKartuKeluarga);
-    }, [initialKartuKeluarga]);
+        setChecklist(initialChecklist);
+    }, [initialChecklist]);
 
     const handleDateChange = (date: string) => {
-        router.get(
-            route('pengambilan-sampah.index'),
-            { date },
-            {
-                preserveScroll: true,
-                preserveState: true, // Agar tidak kehilangan state search/filter lain
-            },
-        );
+        router.get(route('pengambilan-sampah.index'), { date }, { preserveScroll: true, preserveState: true });
     };
 
-    const handleMark = (kk: KartuKeluarga, action: 'ambil' | 'batal') => {
-        // --- BEST PRACTICE: OPTIMISTIC UI ---
-        // 1. Update UI secara lokal terlebih dahulu agar terasa instan.
-        setKkData((currentData) =>
-            currentData.map((item) => {
-                if (item.id === kk.id) {
-                    return {
-                        ...item,
-                        log_pengambilan_hari_ini:
-                            action === 'ambil'
-                                ? { id: -1, tanggal_ambil: selectedDate, status: 'Diambil' } // Buat data palsu
-                                : null,
-                    };
-                }
-                return item;
-            }),
+    const handleMark = (zona: string, action: 'ambil' | 'batal') => {
+        setChecklist((current) =>
+            current.map((item) =>
+                item.zona === zona ? { ...item, status: action === 'ambil' ? 'Sudah Diambil' : 'Menunggu' } : item,
+            ),
         );
 
-        // 2. Kirim request ke server di belakang layar.
         const requestOptions = {
             preserveScroll: true,
             onSuccess: () => {
-                const message = action === 'ambil' ? 'Status pengambilan berhasil diupdate.' : 'Status berhasil dibatalkan.';
-                toast.success(message);
+                toast.success('Status berhasil diperbarui.');
             },
             onError: () => {
                 toast.error('Gagal memperbarui status. Memulihkan data.');
-                setKkData(initialKartuKeluarga);
+                setChecklist(initialChecklist);
             },
         };
 
+        const data = { date: selectedDate, zona };
+
         if (action === 'ambil') {
-            router.post(
-                route('pengambilan-sampah.store', kk.id),
-                { date: selectedDate }, 
-                requestOptions, 
-            );
+            router.post(route('pengambilan-sampah.store'), data, requestOptions);
         } else {
-            router.delete(route('pengambilan-sampah.destroy', kk.id), {
-                data: { date: selectedDate },
-                ...requestOptions, 
-            });
+            router.delete(route('pengambilan-sampah.destroy'), { data, ...requestOptions });
         }
     };
 
-    const columns: ColumnDef<KartuKeluarga>[] = [
+    const columns: ColumnDef<ChecklistItem>[] = [
         {
-            accessorKey: 'nama_kepala_keluarga',
-            header: 'Nama Kepala Keluarga',
-            cell: ({ row }) => (
-                <div>
-                    <div className="font-medium">{row.original.nama_kepala_keluarga}</div>
-                    <div className="text-xs text-muted-foreground">
-                        {row.original.alamat}, RT {row.original.rt}/RW {row.original.rw}
-                    </div>
-                </div>
-            ),
+            accessorKey: 'zona',
+            header: 'Zona',
         },
         {
             accessorKey: 'status',
             header: 'Status',
-            cell: ({ row }) => {
-                const log = row.original.log_pengambilan_hari_ini;
-                return log ? (
+            cell: ({ row }) =>
+                row.original.status === 'Sudah Diambil' ? (
                     <Badge variant="default">
                         <Check className="mr-1 h-4 w-4" />
                         Sudah Diambil
                     </Badge>
                 ) : (
                     <Badge variant="secondary">Menunggu</Badge>
-                );
-            },
+                ),
         },
         {
             id: 'aksi',
             header: 'Aksi',
-            cell: ({ row }) => {
-                const log = row.original.log_pengambilan_hari_ini;
-                return log ? (
-                    <Button variant="destructive" size="sm" onClick={() => handleMark(row.original, 'batal')}>
+            cell: ({ row }) =>
+                row.original.status === 'Sudah Diambil' ? (
+                    <Button variant="destructive" size="sm" onClick={() => handleMark(row.original.zona, 'batal')}>
                         <Undo2 className="mr-1 h-4 w-4" /> Batalkan
                     </Button>
                 ) : (
-                    <Button variant="default" size="sm" onClick={() => handleMark(row.original, 'ambil')}>
+                    <Button variant="default" size="sm" onClick={() => handleMark(row.original.zona, 'ambil')}>
                         <Recycle className="mr-1 h-4 w-4" /> Ambil Sampah
                     </Button>
-                );
-            },
+                ),
         },
     ];
+
+    // --- REVISI UTAMA: Buat instance tabel kosong untuk kasus "Tidak Ada Jadwal" ---
+    const emptyTable = useReactTable({
+        data: [],
+        columns,
+        getCoreRowModel: getCoreRowModel(),
+    });
 
     const breadcrumb = [{ title: 'Pengambilan Sampah', href: '/pengambilan-sampah' }];
 
@@ -149,15 +108,59 @@ const PengambilanSampahIndex: React.FC<PageProps> = ({ kartuKeluarga: initialKar
         <AppLayout breadcrumbs={breadcrumb}>
             <Head title="Pengambilan Sampah" />
             <div className="container">
-                <h1>Checklist Pengambilan Sampah Harian</h1>
-                <DataTable columns={columns} data={kkData}>
-                    {({ table }) => (
+                <h1>Checklist Pengambilan Sampah per Zona</h1>
+
+                {/* Kondisi untuk menampilkan tabel atau card pesan kosong */}
+                {checklist.length > 0 ? (
+                    // Tampilkan DataTable seperti biasa jika ada data
+                    <DataTable columns={columns} data={checklist}>
+                        {({ table }) => (
+                            <DataTableControls
+                                table={table}
+                                search={true} // Aktifkan search jika ada data
+                                action={
+                                    <Input
+                                        type="date"
+                                        value={selectedDate}
+                                        onChange={(e) => handleDateChange(e.target.value)}
+                                        className="w-fit"
+                                    />
+                                }
+                            />
+                        )}
+                    </DataTable>
+                ) : (
+                    // Jika tidak ada data, render Controls dan Card secara terpisah
+                    <div className="space-y-4">
                         <DataTableControls
-                            table={table}
-                            action={<Input type="date" value={selectedDate} onChange={(e) => handleDateChange(e.target.value)} className="w-fit" />}
+                            table={emptyTable} // Gunakan tabel kosong
+                            search={false} // Matikan search jika tidak ada data
+                            action={
+                                <Input
+                                    type="date"
+                                    value={selectedDate}
+                                    onChange={(e) => handleDateChange(e.target.value)}
+                                    className="w-fit"
+                                />
+                            }
                         />
-                    )}
-                </DataTable>
+                        <Card className="flex flex-col items-center justify-center border-dashed py-12 text-center">
+                            <CardHeader className="w-full">
+                                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                                    <CalendarX2 className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                            </CardHeader>
+                            <CardContent className="">
+                                <CardTitle className="mb-2 text-xl font-semibold">Tidak Ada Jadwal</CardTitle>
+                                <p className="text-muted-foreground">
+                                    Tidak ada jadwal pengambilan sampah untuk tanggal yang Anda pilih.
+                                    <br />
+                                    Silakan pilih tanggal lain atau atur jadwal jika diperlukan.
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
             </div>
         </AppLayout>
     );

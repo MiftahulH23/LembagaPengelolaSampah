@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\KartuKeluarga;
+use App\Models\Jadwal;
 use App\Models\LogPengambilan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -13,57 +13,73 @@ class PengambilanSampahController extends Controller
 {
     public function index(Request $request)
     {
-        // Validasi tanggal, jika tidak ada, gunakan tanggal hari ini
         $request->validate(['date' => 'nullable|date_format:Y-m-d']);
-        $selectedDate = $request->input('date', Carbon::today()->toDateString());
-        $kelurahanId = auth()->user()->kelurahan_id ?? null;
+        $selectedDate = Carbon::parse($request->input('date', 'today'));
+        $user = auth()->user();
+        $kelurahanId = $user->kelurahan_id;
 
-        // Ambil semua KK dan status pengambilan HANYA untuk tanggal yang dipilih
-        // Ini sangat efisien karena tidak mengambil semua riwayat log
-        $kartuKeluarga = KartuKeluarga::with([
-            'kelurahan',
-            'kecamatan',
-            'logPengambilanHariIni' => function ($query) use ($selectedDate) {
-                $query->where('tanggal_ambil', $selectedDate);
-            }
-        ])->where('kelurahan_id', $kelurahanId)
-            ->orderBy('nama_kepala_keluarga')->get();
+        // 1. Tentukan hari berdasarkan tanggal yang dipilih
+        $namaHari = $selectedDate->translatedFormat('l'); // 'Senin', 'Selasa', etc.
+
+        // 2. Ambil jadwal zona untuk hari dan kelurahan tersebut
+        $zonaDijadwalkan = Jadwal::where('kelurahan_id', $kelurahanId)
+            ->where('hari', $namaHari)
+            ->pluck('zona');
+
+        // 3. Ambil log pengambilan yang sudah dilakukan untuk tanggal dan kelurahan tersebut
+        $logSudahDiambil = LogPengambilan::where('kelurahan_id', $kelurahanId)
+            ->where('tanggal_ambil', $selectedDate->toDateString())
+            ->pluck('zona');
+
+        // 4. Gabungkan data untuk dikirim ke frontend
+        $checklistData = $zonaDijadwalkan->map(function ($zona) use ($logSudahDiambil) {
+            return [
+                'zona' => $zona,
+                'status' => $logSudahDiambil->contains($zona) ? 'Sudah Diambil' : 'Menunggu',
+            ];
+        });
 
         return Inertia::render('lps/pengambilan-sampah/Index', [
-            'kartuKeluarga' => $kartuKeluarga,
-            'selectedDate' => $selectedDate,
+            'checklistData' => $checklistData,
+            'selectedDate' => $selectedDate->toDateString(),
         ]);
     }
 
-    // Aksi untuk menandai "Sudah Diambil"
-    public function store(Request $request, KartuKeluarga $kartuKeluarga)
+    public function store(Request $request)
     {
-        $request->validate(['date' => 'required|date_format:Y-m-d']);
+        $validated = $request->validate([
+            'date' => 'required|date_format:Y-m-d',
+            'zona' => 'required|string',
+        ]);
+        $user = auth()->user();
 
-        // findOrCreate untuk efisiensi
         LogPengambilan::firstOrCreate(
             [
-                'kartu_keluarga_id' => $kartuKeluarga->id,
-                'tanggal_ambil' => $request->date,
+                'kelurahan_id' => $user->kelurahan_id,
+                'zona' => $validated['zona'],
+                'tanggal_ambil' => $validated['date'],
             ],
             [
                 'status' => 'Diambil',
-                'diinput_oleh' => Auth::user()->username,
+                'diinput_oleh' => $user->username,
             ]
         );
-
-        return back()->with('success', 'Status berhasil diperbarui.');
+        return back(); // Inertia akan me-refresh props secara otomatis
     }
 
-    // Aksi untuk "Batalkan" / Mengembalikan ke status "Menunggu"
-    public function destroy(Request $request, KartuKeluarga $kartuKeluarga)
+    public function destroy(Request $request)
     {
-        $request->validate(['date' => 'required|date_format:Y-m-d']);
+        $validated = $request->validate([
+            'date' => 'required|date_format:Y-m-d',
+            'zona' => 'required|string',
+        ]);
+        $user = auth()->user();
 
-        LogPengambilan::where('kartu_keluarga_id', $kartuKeluarga->id)
-            ->where('tanggal_ambil', $request->date)
+        LogPengambilan::where('kelurahan_id', $user->kelurahan_id)
+            ->where('zona', $validated['zona'])
+            ->where('tanggal_ambil', $validated['date'])
             ->delete();
 
-        return back()->with('success', 'Status berhasil dibatalkan.');
+        return back();
     }
 }

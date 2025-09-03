@@ -12,14 +12,15 @@ return new class extends Migration
     public function up(): void {
         Schema::create('log_pengambilan', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('kartu_keluarga_id');
-            $table->foreign('kartu_keluarga_id')->references('id')->on('kartu_keluarga')->onDelete('cascade');
+            $table->unsignedBigInteger('kelurahan_id');
+            $table->foreign('kelurahan_id')->references('id')->on('kelurahan')->onDelete('cascade');
+            $table->string('zona');
             $table->date('tanggal_ambil');
             $table->string('status')->default('Diambil'); // Misal: Diambil, Rumah Kosong
             $table->string('diinput_oleh');
             $table->timestamps();
             // Kunci unik untuk memastikan satu rumah hanya punya satu log per hari
-            $table->unique(['kartu_keluarga_id', 'tanggal_ambil']);
+            $table->unique(['kelurahan_id','zona', 'tanggal_ambil']);
         });
     }
     public function down(): void {

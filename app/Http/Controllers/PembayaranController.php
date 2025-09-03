@@ -65,7 +65,7 @@ class PembayaranController extends Controller
             ->orderBy('created_at', 'desc')
             ->firstOrFail();
 
-            dd($iuran->toArray()); // Gagal jika tidak ada iuran yang terdaftar untuk kelurahan tsb
+            // dd($iuran->toArray()); // Gagal jika tidak ada iuran yang terdaftar untuk kelurahan tsb
 
         $bulanSudahDibayar = Pembayaran::where('kartu_keluarga_id', $kartuKeluarga->id)
             ->where('tahun', $request->tahun)

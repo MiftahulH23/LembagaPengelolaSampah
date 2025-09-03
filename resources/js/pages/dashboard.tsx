@@ -1,36 +1,44 @@
 import { Head } from '@inertiajs/react';
 import React from 'react';
-import { Area, Bar, BarChart, Line, LineChart, XAxis, YAxis } from 'recharts';
+import { Area, Bar, BarChart, Legend, Line, LineChart, XAxis, YAxis } from 'recharts';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import AppLayout from '@/layouts/app-layout';
-import { Home, TrendingUp, Wallet } from 'lucide-react';
+import { Home, Recycle, TrendingUp, Wallet } from 'lucide-react';
 
 // --- Tipe Data ---
 interface StatistikProps {
     totalKK: number;
-    // ... properti lain
+    persentaseSudahDiambil: number;
     potensiPemasukanTahunan: string;
     pemasukanTahunIni: string;
 }
 
-interface GrafikData {
+interface GrafikIuranData {
     name: string;
-    pendapatan?: number;
-    rumah?: number;
+    pendapatan: number;
+}
+
+// REVISI: Tipe data baru untuk chart pengambilan
+interface GrafikPengambilanData {
+    name: string;
+    dijadwalkan: number;
+    diambil: number;
 }
 
 interface PageProps {
     statistik: StatistikProps;
-    grafikIuran: GrafikData[];
-    grafikPengambilan: GrafikData[];
-    dataMaxIuran: number; // --- REVISI: Tambahkan tipe untuk prop baru ---
+    grafikIuran: GrafikIuranData[];
+    grafikPengambilan: GrafikPengambilanData[];
+    dataMaxIuran: number;
 }
 
+// REVISI: Konfigurasi untuk styling chart baru
 const chartConfig = {
     pendapatan: { label: 'Pendapatan', color: 'var(--chart-1)' },
-    rumah: { label: 'Rumah', color: 'var(--chart-1)' },
+    dijadwalkan: { label: 'Dijadwalkan', color: 'var(--chart-3)' }, // Gunakan warna berbeda
+    diambil: { label: 'Sudah Diambil', color: 'var(--chart-2)' },
 };
 
 const DashboardIndex: React.FC<PageProps> = ({ statistik, grafikIuran, grafikPengambilan, dataMaxIuran }) => {
@@ -44,36 +52,53 @@ const DashboardIndex: React.FC<PageProps> = ({ statistik, grafikIuran, grafikPen
                     <h1>Dashboard</h1>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {/* ... (Kode Card Statistik tidak berubah) ... */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {/* Card 1: Potensi Iuran */}
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        {/* Beri tinggi minimum yang konsisten untuk semua header */}
+                        <CardHeader className="flex min-h-[40px] flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Potensi Iuran (Tahunan)</CardTitle>
                             <TrendingUp className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-xl font-bold">{statistik.potensiPemasukanTahunan}</div>
+                            <div className="text-2xl font-bold">{statistik.potensiPemasukanTahunan}</div>
                             <p className="text-xs text-muted-foreground">Target pendapatan iuran tahun ini</p>
                         </CardContent>
                     </Card>
+
+                    {/* Card 2: Pemasukan Iuran */}
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardHeader className="flex min-h-[40px] flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Pemasukan Iuran (Tahun Ini)</CardTitle>
                             <Wallet className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-xl font-bold">{statistik.pemasukanTahunIni}</div>
+                            <div className="text-2xl font-bold">{statistik.pemasukanTahunIni}</div>
                             <p className="text-xs text-muted-foreground">Total iuran terkumpul hingga saat ini</p>
                         </CardContent>
                     </Card>
+
+                    {/* Card 3: Total Kartu Keluarga */}
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardHeader className="flex min-h-[40px] flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total Kartu Keluarga</CardTitle>
                             <Home className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-xl font-bold">{statistik.totalKK}</div>
+                            <div className="text-2xl font-bold">{statistik.totalKK}</div>
                             <p className="text-xs text-muted-foreground">Jumlah kartu keluarga terdaftar</p>
+                        </CardContent>
+                    </Card>
+
+                    {/* Card 4: Progres Pengambilan */}
+                    <Card>
+                        <CardHeader className="flex min-h-[40px] flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Progres Pengambilan (Hari Ini)</CardTitle>
+                            <Recycle className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{statistik.persentaseSudahDiambil}%</div>
+                            <p className="text-xs text-muted-foreground">Dari total zona yang dijadwalkan</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -130,22 +155,21 @@ const DashboardIndex: React.FC<PageProps> = ({ statistik, grafikIuran, grafikPen
                         </CardContent>
                     </Card>
 
-                    {/* Grafik Pengambilan Sampah */}
+                    {/* --- REVISI: Grafik Pengambilan Sampah --- */}
                     <Card className="border border-muted bg-transparent">
                         <CardHeader>
                             <CardTitle>Progres Pengambilan Sampah Minggu Ini</CardTitle>
-                            <CardDescription>Jumlah rumah yang sampahnya berhasil diambil setiap hari.</CardDescription>
+                            <CardDescription>Perbandingan zona yang dijadwalkan vs. yang sudah diambil.</CardDescription>
                         </CardHeader>
                         <CardContent className="pl-2">
                             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                                <BarChart accessibilityLayer data={grafikPengambilan} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+                                <BarChart accessibilityLayer data={grafikPengambilan} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                                     <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                                     <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                    <ChartTooltip
-                                        cursor={false}
-                                        content={<ChartTooltipContent hideLabel formatter={(value) => `${value} Rumah`} />}
-                                    />
-                                    <Bar dataKey="rumah" fill="var(--color-rumah)" radius={4} />
+                                    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                                    <Legend verticalAlign="top" height={36} />
+                                    <Bar dataKey="dijadwalkan" fill="var(--color-dijadwalkan)" radius={4} />
+                                    <Bar dataKey="diambil" fill="var(--color-diambil)" radius={4} />
                                 </BarChart>
                             </ChartContainer>
                         </CardContent>

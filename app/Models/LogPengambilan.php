@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class LogPengambilan extends Model
 {
     protected $table = 'log_pengambilan';
-    protected $fillable = [
-        'kartu_keluarga_id', 'tanggal_ambil', 'status', 'diinput_oleh'
+     protected $fillable = [
+        'kelurahan_id', 'zona', 'tanggal_ambil', 'status', 'diinput_oleh'
     ];
-    public function kartuKeluarga()
+    public function kelurahan()
     {
-        return $this->belongsTo(KartuKeluarga::class);
+        return $this->belongsTo(Kelurahan::class);
     }
 }
