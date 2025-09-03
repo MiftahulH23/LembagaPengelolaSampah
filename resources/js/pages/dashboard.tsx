@@ -37,7 +37,7 @@ interface PageProps {
 // REVISI: Konfigurasi untuk styling chart baru
 const chartConfig = {
     pendapatan: { label: 'Pendapatan', color: 'var(--chart-1)' },
-    dijadwalkan: { label: 'Dijadwalkan', color: 'var(--chart-3)' }, // Gunakan warna berbeda
+    dijadwalkan: { label: 'Dijadwalkan', color: 'var(--chart-1)' }, // Gunakan warna berbeda
     diambil: { label: 'Sudah Diambil', color: 'var(--chart-2)' },
 };
 
