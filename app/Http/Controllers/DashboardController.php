@@ -1,6 +1,4 @@
 <?php
-// app/Http/Controllers/DashboardController.php
-
 namespace App\Http\Controllers;
 
 use App\Models\Jadwal;
@@ -11,17 +9,37 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Support\Collection;
 
 class DashboardController extends Controller
 {
+    /**
+     * Menampilkan halaman dashboard utama.
+     */
     public function index()
     {
-        $bulanIni = Carbon::now()->month;
-        $tahunIni = Carbon::now()->year;
         $user = auth()->user();
         $kelurahanId = optional($user)->kelurahan_id;
+        $tahunIni = Carbon::now()->year;
 
-        // --- 1) DATA STATISTIK UTAMA (KARTU) ---
+        // Panggil private method untuk setiap set data
+        $statistik = $this->getStatistikData($kelurahanId, $tahunIni);
+        $grafikIuran = $this->getGrafikIuranData($kelurahanId, $tahunIni);
+        $grafikPengambilan = $this->getGrafikPengambilanData($kelurahanId);
+
+        return Inertia::render('dashboard', [
+            'statistik' => $statistik,
+            'grafikIuran' => $grafikIuran['data'],
+            'dataMaxIuran' => $grafikIuran['max_iuran'],
+            'grafikPengambilan' => $grafikPengambilan,
+        ]);
+    }
+
+    /**
+     * Mengambil dan memformat data untuk kartu statistik.
+     */
+    private function getStatistikData(?int $kelurahanId, int $tahunIni): array
+    {
         $totalKK = KartuKeluarga::when($kelurahanId, fn ($q) => $q->where('kelurahan_id', $kelurahanId))->count();
 
         $iuranPerBulanStatis = 25000;
@@ -34,24 +52,32 @@ class DashboardController extends Controller
             ->where('tahun', $tahunIni)
             ->sum('jumlah');
 
-        // --- REVISI UTAMA: LOGIKA PENGAMBILAN SAMPAH ---
         $tanggalHariIni = Carbon::today();
-        $namaHariIni = $tanggalHariIni->locale('id')->translatedFormat('l'); // 'Senin', 'Selasa', etc.
+        $namaHariIni = $tanggalHariIni->locale('id')->translatedFormat('l');
 
-        // Hitung total zona yang dijadwalkan hari ini
-        $totalZonaHariIni = Jadwal::where('kelurahan_id', $kelurahanId)
+        $totalZonaHariIni = Jadwal::when($kelurahanId, fn ($q) => $q->where('kelurahan_id', $kelurahanId))
             ->where('hari', $namaHariIni)
             ->count();
 
-        // Hitung zona yang sudah diambil log-nya hari ini
-        $zonaSudahDiambilHariIni = LogPengambilan::where('kelurahan_id', $kelurahanId)
+        $zonaSudahDiambilHariIni = LogPengambilan::when($kelurahanId, fn ($q) => $q->where('kelurahan_id', $kelurahanId))
             ->where('tanggal_ambil', $tanggalHariIni->toDateString())
             ->count();
         
         $persentaseSudahDiambil = $totalZonaHariIni > 0 ? ($zonaSudahDiambilHariIni / $totalZonaHariIni) * 100 : 0;
 
+        return [
+            'totalKK' => $totalKK,
+            'persentaseSudahDiambil' => round($persentaseSudahDiambil),
+            'potensiPemasukanTahunan' => 'Rp ' . number_format($potensiPemasukanTahunan, 0, ',', '.'),
+            'pemasukanTahunIni' => 'Rp ' . number_format($pemasukanTahunIni, 0, ',', '.'),
+        ];
+    }
 
-        // --- 3. DATA GRAFIK IURAN (TIDAK BERUBAH BANYAK) ---
+    /**
+     * Mengambil dan memformat data untuk grafik iuran.
+     */
+    private function getGrafikIuranData(?int $kelurahanId, int $tahunIni): array
+    {
         $iuranPerBulan = Pembayaran::when(
             $kelurahanId,
             fn ($q) => $q->whereHas('kartuKeluarga', fn ($k) => $k->where('kelurahan_id', $kelurahanId))
@@ -66,35 +92,42 @@ class DashboardController extends Controller
         $maxIuran = $iuranPerBulan->max();
         $dataMaxIuran = $maxIuran > 0 ? (ceil($maxIuran / 20000) * 20000) : 80000;
 
-        $grafikIuranData = [];
+        $grafikData = [];
         for ($i = 1; $i <= 12; $i++) {
-            $grafikIuranData[] = [
+            $grafikData[] = [
                 'name' => Carbon::create()->month($i)->translatedFormat('M'),
                 'pendapatan' => $iuranPerBulan->get($i, 0),
             ];
         }
+        
+        return [
+            'data' => $grafikData,
+            'max_iuran' => $dataMaxIuran,
+        ];
+    }
 
-        // --- 4. REVISI UTAMA: DATA GRAFIK PENGAMBILAN SAMPAH (BARU) ---
-        // Menampilkan perbandingan jumlah zona dijadwalkan vs. yang sudah diambil
+    /**
+     * Mengambil dan memformat data untuk grafik pengambilan sampah.
+     */
+    private function getGrafikPengambilanData(?int $kelurahanId): array
+    {
         $startOfWeek = Carbon::now()->startOfWeek();
         
-        // Ambil semua jadwal dalam seminggu
-        $jadwalSeminggu = Jadwal::where('kelurahan_id', $kelurahanId)
+        $jadwalSeminggu = Jadwal::when($kelurahanId, fn ($q) => $q->where('kelurahan_id', $kelurahanId))
             ->whereIn('hari', ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'])
             ->select('hari', DB::raw('COUNT(zona) as total_zona'))
             ->groupBy('hari')
             ->get()
             ->keyBy('hari');
 
-        // Ambil semua log dalam seminggu
-        $logSeminggu = LogPengambilan::where('kelurahan_id', $kelurahanId)
+        $logSeminggu = LogPengambilan::when($kelurahanId, fn ($q) => $q->where('kelurahan_id', $kelurahanId))
             ->whereBetween('tanggal_ambil', [$startOfWeek, Carbon::now()->endOfWeek()])
             ->select(DB::raw('DATE(tanggal_ambil) as tanggal'), DB::raw('COUNT(DISTINCT zona) as total_diambil'))
             ->groupBy('tanggal')
             ->get()
             ->keyBy('tanggal');
 
-        $grafikPengambilanData = [];
+        $grafikData = [];
         for ($i = 0; $i < 7; $i++) {
             $tanggal = $startOfWeek->copy()->addDays($i);
             $namaHari = $tanggal->locale('id')->translatedFormat('l');
@@ -102,23 +135,13 @@ class DashboardController extends Controller
             $totalDijadwalkan = $jadwalSeminggu->get($namaHari)['total_zona'] ?? 0;
             $sudahDiambil = $logSeminggu->get($tanggal->toDateString())['total_diambil'] ?? 0;
 
-            $grafikPengambilanData[] = [
-                'name' => $tanggal->translatedFormat('D'), // Sen, Sel, ...
+            $grafikData[] = [
+                'name' => $tanggal->translatedFormat('D'),
                 'dijadwalkan' => $totalDijadwalkan,
                 'diambil' => $sudahDiambil,
             ];
         }
-
-        return Inertia::render('dashboard', [
-            'statistik' => [
-                'totalKK' => $totalKK,
-                'persentaseSudahDiambil' => round($persentaseSudahDiambil),
-                'potensiPemasukanTahunan' => 'Rp ' . number_format($potensiPemasukanTahunan, 0, ',', '.'),
-                'pemasukanTahunIni' => 'Rp ' . number_format($pemasukanTahunIni, 0, ',', '.'),
-            ],
-            'grafikIuran' => $grafikIuranData,
-            'grafikPengambilan' => $grafikPengambilanData,
-            'dataMaxIuran' => $dataMaxIuran,
-        ]);
+        
+        return $grafikData;
     }
 }
