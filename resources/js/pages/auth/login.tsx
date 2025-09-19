@@ -50,7 +50,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     <div className="mb-6 flex h-32 w-32 items-center justify-center rounded bg-card font-bold text-card-foreground">
                         <img src={Trash} alt="Logo LPS" />
                     </div>
-                    <h1 className="text-2xl font-bold text-sidebar-foreground">Lembaga Pengelola Sampah</h1>
+                    <h1 className="text-2xl font-bold text-sidebar-foreground">SILEPAS PKU</h1>
                 </div>
 
                 {/* Panel Kanan (Form Login) */}
