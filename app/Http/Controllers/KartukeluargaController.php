@@ -25,7 +25,7 @@ class KartukeluargaController extends Controller
         $kecamatanId = $kelurahan->first()->kecamatan_id ?? null;
         $kecamatan = Kecamatan::where('id', $kecamatanId)->get();
         // dd($kecamatan->toArray(), $kelurahan->toArray());
-        return Inertia::render('superadmin/kartukeluarga/Index', [
+        return Inertia::render('lps/kartukeluarga/Index', [
             'kartukeluarga' => $kartukeluarga,
             'kelurahan' => $kelurahan,
             'kecamatan' => $kecamatan,
