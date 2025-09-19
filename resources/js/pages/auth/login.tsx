@@ -2,6 +2,7 @@ import { Head, useForm } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
+import Trash from '@/assets/images/Trash.svg';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -9,8 +10,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import Trash from '@/assets/images/Trash.svg';
-// Pastikan AuthLayout tidak memberikan padding/margin yang berlebih jika kita ingin layoutnya full
 
 type LoginForm = {
     username: string;
@@ -35,24 +34,29 @@ export default function Login({ status, canResetPassword }: LoginProps) {
         post(route('login'), {
             onFinish: () => reset('password'),
             onError: () => {
-                toast.error('Gagal masuk. Periksa kembali username dan password Anda.')
+                toast.error('Gagal masuk. Periksa kembali username dan password Anda.');
             },
         });
     };
 
     return (
-        <div className="h-screen w-full bg-sidebar p-4">
+        // REVISI UTAMA: Div terluar ini sekarang bertugas untuk memposisikan card di tengah
+        <div className="flex h-screen w-full items-center justify-center bg-sidebar p-4">
             <Head title="Masuk" />
-            <div className="h-full w-full overflow-hidden rounded-lg shadow-2xl md:grid lg:grid-cols-2">
-                <div className="hidden flex-col items-center justify-center p-12 lg:flex">
-                    {/* Ganti div ini dengan komponen gambar logo Anda */}
-                    <div className="mb-6 flex h-32 w-32 items-center justify-center rounded bg-white font-bold text-slate-500"><img src={Trash} alt="" /></div>
-                    <h1 className="text-2xl font-bold text-slate-800">Lembaga Pengelola Sampah</h1>
+            {/* Container ini adalah card utama yang akan menjadi 2 kolom di layar besar */}
+            <div className="w-full max-w-4xl overflow-hidden rounded-lg shadow-2xl lg:grid lg:grid-cols-2">
+                {/* Panel Kiri (Branding) */}
+                <div className="hidden flex-col items-center justify-center bg-sidebar p-12 lg:flex">
+                    <div className="mb-6 flex h-32 w-32 items-center justify-center rounded bg-card font-bold text-card-foreground">
+                        <img src={Trash} alt="Logo LPS" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-sidebar-foreground">Lembaga Pengelola Sampah</h1>
                 </div>
 
-                <div className="shadow-4xl flex flex-col items-center justify-center rounded-xl bg-white p-8 sm:p-12">
+                {/* Panel Kanan (Form Login) */}
+                <div className="flex flex-col items-center justify-center bg-card p-8 sm:p-12 bg-white rounded-lg">
                     <div className="w-full max-w-sm">
-                        <h2 className="mb-8 text-center text-3xl font-bold">Masuk</h2>
+                        <h2 className="mb-8 text-center text-3xl font-bold text-card-foreground">Masuk</h2>
 
                         <form method="POST" className="flex flex-col gap-5" onSubmit={submit}>
                             <div className="grid gap-2">
@@ -65,7 +69,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                     value={data.username}
                                     onChange={(e) => setData('username', e.target.value)}
                                     placeholder="Username"
-                                    className="py-6" // Menambah tinggi input
+                                    className="py-6"
                                 />
                                 <InputError message={errors.username} />
                             </div>
@@ -79,10 +83,11 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                     value={data.password}
                                     onChange={(e) => setData('password', e.target.value)}
                                     placeholder="Password"
-                                    className="py-6" // Menambah tinggi input
+                                    className="py-6"
                                 />
                                 <InputError message={errors.password} />
                             </div>
+
                             <div className="flex items-center justify-between text-sm">
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
@@ -110,7 +115,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                 </div>
             </div>
 
-            {status && <div className="mt-4 text-center text-sm font-medium text-green-600">{status}</div>}
+            {status && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm font-medium text-green-600">{status}</div>}
         </div>
     );
 }
