@@ -196,7 +196,7 @@ export function DataTable<Data, Value>(props: DataTable<Data, Value> & Omit<Reac
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="px-2 bg-white dark:bg-black">
+          <TableBody className="px-2 bg-white ">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
