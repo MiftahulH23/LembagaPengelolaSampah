@@ -18,20 +18,21 @@ class PengambilanSampahController extends Controller
         $user = auth()->user();
         $kelurahanId = $user->kelurahan_id;
 
-        // 1. Tentukan hari berdasarkan tanggal yang dipilih
-        $namaHari = $selectedDate->translatedFormat('l'); // 'Senin', 'Selasa', etc.
+        // --- REVISI UTAMA: Pastikan locale adalah 'id' ---
+        // Ini memastikan Carbon menghasilkan "Senin", "Selasa", dll.
+        $namaHari = $selectedDate->locale('id')->translatedFormat('l');
 
-        // 2. Ambil jadwal zona untuk hari dan kelurahan tersebut
+        // Ambil jadwal zona untuk hari dan kelurahan tersebut
         $zonaDijadwalkan = Jadwal::where('kelurahan_id', $kelurahanId)
             ->where('hari', $namaHari)
             ->pluck('zona');
 
-        // 3. Ambil log pengambilan yang sudah dilakukan untuk tanggal dan kelurahan tersebut
+        // Ambil log pengambilan yang sudah dilakukan
         $logSudahDiambil = LogPengambilan::where('kelurahan_id', $kelurahanId)
             ->where('tanggal_ambil', $selectedDate->toDateString())
             ->pluck('zona');
 
-        // 4. Gabungkan data untuk dikirim ke frontend
+        // Gabungkan data untuk dikirim ke frontend
         $checklistData = $zonaDijadwalkan->map(function ($zona) use ($logSudahDiambil) {
             return [
                 'zona' => $zona,
@@ -64,7 +65,9 @@ class PengambilanSampahController extends Controller
                 'diinput_oleh' => $user->username,
             ]
         );
-        return back(); // Inertia akan me-refresh props secara otomatis
+        // --- BEST PRACTICE: Gunakan to_route untuk refresh data ---
+        return to_route('pengambilan-sampah.index', ['date' => $validated['date']])
+            ->with('success', 'Status berhasil diperbarui.');
     }
 
     public function destroy(Request $request)
@@ -80,6 +83,8 @@ class PengambilanSampahController extends Controller
             ->where('tanggal_ambil', $validated['date'])
             ->delete();
 
-        return back();
+        // --- BEST PRACTICE: Gunakan to_route untuk refresh data ---
+        return to_route('pengambilan-sampah.index', ['date' => $validated['date']])
+            ->with('success', 'Status berhasil dibatalkan.');
     }
 }

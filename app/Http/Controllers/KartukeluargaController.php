@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\KartuKeluarga;
 use App\Models\Kecamatan;
 use App\Models\Kelurahan;
+use App\Models\Zona;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -17,18 +18,21 @@ class KartukeluargaController extends Controller
     {
         $kelurahanId = auth()->user()->kelurahan_id ?? null;
 
-        $kartukeluarga = KartuKeluarga::with(['kecamatan', 'kelurahan'])
+        $kartukeluarga = KartuKeluarga::with(['kecamatan', 'kelurahan', 'zona'])
             ->where('kelurahan_id', $kelurahanId)
             ->orderBy('created_at', 'desc')
             ->get();
         $kelurahan = Kelurahan::where('id', $kelurahanId)->get();
         $kecamatanId = $kelurahan->first()->kecamatan_id ?? null;
         $kecamatan = Kecamatan::where('id', $kecamatanId)->get();
+        $zonas = Zona::where('kelurahan_id', $kelurahanId)->orderBy('nama_zona')->get();
+
         // dd($kecamatan->toArray(), $kelurahan->toArray());
         return Inertia::render('lps/kartukeluarga/Index', [
             'kartukeluarga' => $kartukeluarga,
             'kelurahan' => $kelurahan,
             'kecamatan' => $kecamatan,
+            'zonas' => $zonas,
         ]);
     }
 
@@ -52,7 +56,7 @@ class KartukeluargaController extends Controller
             'alamat' => 'required|string|max:255',
             'rt' => 'required|string|max:5',
             'rw' => 'required|string|max:5',
-            'zona' => 'required|string|max:10',
+            'zona_id' => 'required|exists:zona,id',
             'kelurahan_id' => 'required|exists:kelurahan,id',
             'kecamatan_id' => 'required|exists:kecamatan,id',
         ], [
@@ -76,8 +80,8 @@ class KartukeluargaController extends Controller
             'rw.required' => 'RW wajib diisi.',
             'rw.string' => 'RW harus berupa teks.',
             'rw.max' => 'RW maksimal 5 karakter.',
-            'zona.required' => 'Zona wajib diisi.',
-            'zona.string' => 'Zona harus berupa teks.',
+            'zona_id.required' => 'Zona wajib dipilih.', 
+            'zona_id.exists' => 'Zona yang dipilih tidak valid.', 
             'zona.max' => 'Zona maksimal 10 karakter.',
             'kelurahan_id.required' => 'Kelurahan wajib dipilih.',
             'kelurahan_id.exists' => 'Kelurahan yang dipilih tidak valid.',
@@ -118,7 +122,7 @@ class KartukeluargaController extends Controller
             'alamat' => 'required|string|max:255',
             'rt' => 'required|string|max:5',
             'rw' => 'required|string|max:5',
-            'zona' => 'required|string|max:10',
+            'zona_id' => 'required|exists:zona,id',
             'kelurahan_id' => 'required|exists:kelurahan,id',
             'kecamatan_id' => 'required|exists:kecamatan,id',
         ], [
@@ -146,9 +150,8 @@ class KartukeluargaController extends Controller
             'kelurahan_id.exists' => 'Kelurahan yang dipilih tidak valid.',
             'kecamatan_id.required' => 'Kecamatan wajib dipilih.',
             'kecamatan_id.exists' => 'Kecamatan yang dipilih tidak valid.',
-            'zona.required' => 'Zona wajib diisi.',
-            'zona.string' => 'Zona harus berupa teks.',
-            'zona.max' => 'Zona maksimal 10 karakter.',
+            'zona_id.required' => 'Zona wajib dipilih.', 
+            'zona_id.exists' => 'Zona yang dipilih tidak valid.', 
         ]);
 
         KartuKeluarga::where('id', $id)->update($validated);

@@ -8,6 +8,7 @@ use App\Http\Controllers\KecamatanController;
 use App\Http\Controllers\KelurahanController;
 use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\PengambilanSampahController;
+use App\Http\Controllers\ZonaController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -26,6 +27,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('kelurahan', KelurahanController::class);
     Route::resource('kartukeluarga', KartukeluargaController::class);
     Route::resource('iuran', IuranController::class);
+    Route::resource('zona', ZonaController::class);
 
     Route::get('/pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index');
     Route::post('/pembayaran/{kartuKeluarga}', [PembayaranController::class, 'store'])->name('pembayaran.store');

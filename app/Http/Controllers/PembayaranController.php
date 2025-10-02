@@ -23,6 +23,7 @@ class PembayaranController extends Controller
         $kartuKeluarga = KartuKeluarga::with([
             'kelurahan',
             'kecamatan',
+            'zona',
             'pembayaran' => fn($q) => $q->where('tahun', $selectedYear)
         ])
             ->where('kelurahan_id', $kelurahanId)

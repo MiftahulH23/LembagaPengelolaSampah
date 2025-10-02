@@ -23,7 +23,8 @@ return new class extends Migration
             $table->string('alamat');
             $table->string('rt');
             $table->string('rw');
-            $table->string('zona');
+            $table->unsignedBigInteger('zona_id');
+            $table->foreign('zona_id')->references('id')->on('zona')->onDelete('cascade');
             $table->timestamps();
         });
     }

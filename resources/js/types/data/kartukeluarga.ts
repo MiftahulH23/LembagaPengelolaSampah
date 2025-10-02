@@ -1,4 +1,5 @@
 import { Wilayah } from './wilayah';
+import { Zona } from './zona';
 
 export namespace KartuKeluarga {
     export interface Default {
@@ -9,7 +10,8 @@ export namespace KartuKeluarga {
         alamat: string;
         rt: string;
         rw: string;
-        zona: string; // Baru
+        zona_id: string; // Baru
+        zona?: Zona.Default
         kelurahan_id: string;
         kelurahan?: Wilayah.Kelurahan;
         kecamatan_id: string;

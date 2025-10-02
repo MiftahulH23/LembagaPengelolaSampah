@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Jadwal;
 use App\Models\KartuKeluarga;
+use App\Models\Zona;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -18,10 +19,9 @@ class JadwalController extends Controller
         }
 
         // Ambil semua zona unik dari kartu_keluarga untuk kelurahan ini
-        $listZona = KartuKeluarga::where('kelurahan_id', $kelurahanId)
-            ->distinct()
-            ->orderBy('zona')
-            ->pluck('zona');
+       $listZona = Zona::where('kelurahan_id', $kelurahanId)
+            ->orderBy('nama_zona')
+            ->get(); // Ambil seluruh objek zona (id dan nama_zona)
 
         // Ambil jadwal yang sudah ada dari database
         $jadwalTersimpan = Jadwal::where('kelurahan_id', $kelurahanId)
@@ -48,9 +48,9 @@ class JadwalController extends Controller
         $validated = $request->validate([
             'hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
             'zona' => 'nullable|array',
-            'zona.*' => 'string',
+            'zona.*' => 'string', // Data yang dikirim tetap string (nama_zona)
         ]);
-
+        
         DB::transaction(function () use ($validated, $kelurahanId) {
             Jadwal::where('kelurahan_id', $kelurahanId)
                   ->where('hari', $validated['hari'])
@@ -76,9 +76,7 @@ class JadwalController extends Controller
             }
         });
 
-        // --- REVISI UTAMA DI SINI ---
-        // Ganti `return back()` dengan `return to_route()`
-        // Ini memberikan sinyal yang jelas ke Inertia untuk menyelesaikan request dan me-refresh props.
+        // Redirect agar props di-refresh
         return to_route('jadwal.index')
             ->with('success', 'Jadwal untuk hari ' . $validated['hari'] . ' berhasil diperbarui.');
     }

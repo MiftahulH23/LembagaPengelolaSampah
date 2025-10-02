@@ -8,20 +8,26 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { Pencil } from 'lucide-react';
-// Tidak perlu toast di sini karena notifikasi akan ditangani oleh flash message Laravel
+import { toast } from 'sonner';
 
 // --- Tipe Data ---
 type JadwalTersimpan = Record<string, string[]>;
 
+// --- REVISI: Tipe data baru untuk 'semuaZona' ---
+interface Zona {
+    id: number;
+    nama_zona: string;
+}
+
 interface PageProps {
-    semuaZona: string[];
+    semuaZona: Zona[]; // <-- REVISI
     jadwalTersimpan: JadwalTersimpan;
 }
 
 // --- Komponen Modal Edit Jadwal ---
 const EditJadwalModal: React.FC<{
     hari: string;
-    semuaZona: string[];
+    semuaZona: Zona[]; // <-- REVISI
     zonaTerpilihAwal: string[];
 }> = ({ hari, semuaZona, zonaTerpilihAwal }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,7 +37,6 @@ const EditJadwalModal: React.FC<{
         zona: zonaTerpilihAwal,
     });
 
-    // Reset form setiap kali modal dibuka untuk memastikan data selalu segar
     useEffect(() => {
         if (isModalOpen) {
             reset();
@@ -39,23 +44,22 @@ const EditJadwalModal: React.FC<{
         }
     }, [isModalOpen, zonaTerpilihAwal]);
 
-    const handleCheckboxChange = (zona: string, checked: boolean) => {
-        setData('zona', checked ? [...data.zona, zona] : data.zona.filter((z) => z !== zona));
+    const handleCheckboxChange = (namaZona: string, checked: boolean) => {
+        setData('zona', checked ? [...data.zona, namaZona] : data.zona.filter((z) => z !== namaZona));
     };
 
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
-
         post(route('jadwal.store'), {
-            preserveScroll: true,
-            // onSuccess dan onError sekarang tidak perlu lagi karena redirect dari backend
-            // akan menangani semuanya (refresh data dan tampilkan notifikasi)
-            onFinish: () => {
-                // Tutup modal jika request selesai
-                if (!Object.keys(errors).length) {
-                    setIsModalOpen(false);
-                }
+            preserveScroll: false, // Ganti ke false agar notifikasi terlihat
+            onSuccess: () => {
+                setIsModalOpen(false);
+                // Notifikasi sukses akan ditangani oleh flash message Laravel
             },
+            onError: (err) => {
+                toast.error('Gagal menyimpan jadwal.');
+                console.error(err);
+            }
         });
     };
 
@@ -73,20 +77,24 @@ const EditJadwalModal: React.FC<{
                     </DialogHeader>
                     <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-4 pr-6">
                         {semuaZona.length > 0 ? (
+                            // --- REVISI: Gunakan 'nama_zona' dari objek zona ---
                             semuaZona.map((zona) => (
-                                <div key={zona} className="flex items-center space-x-2">
+                                <div key={zona.id} className="flex items-center space-x-2">
                                     <Checkbox
-                                        id={`${hari}-${zona}`}
-                                        checked={data.zona.includes(zona)}
-                                        onCheckedChange={(checked) => handleCheckboxChange(zona, !!checked)}
+                                        id={`${hari}-${zona.nama_zona}`}
+                                        checked={data.zona.includes(zona.nama_zona)}
+                                        onCheckedChange={(checked) => handleCheckboxChange(zona.nama_zona, !!checked)}
                                     />
-                                    <Label htmlFor={`${hari}-${zona}`} className="text-sm font-medium">
-                                        {zona}
+                                    <Label htmlFor={`${hari}-${zona.nama_zona}`} className="text-sm font-medium">
+                                        {zona.nama_zona}
                                     </Label>
                                 </div>
                             ))
                         ) : (
-                            <p className="text-center text-sm text-muted-foreground">Tidak ada data zona yang tersedia.</p>
+                            <p className="text-center text-sm text-muted-foreground">
+                                Tidak ada data zona yang tersedia. <br/>
+                                Silakan tambahkan data zona terlebih dahulu di menu "Data Zona".
+                            </p>
                         )}
                     </div>
                     <DialogFooter>
@@ -140,7 +148,11 @@ const JadwalIndex: React.FC<PageProps> = ({ semuaZona, jadwalTersimpan }) => {
                                 )}
                             </CardContent>
                             <CardFooter>
-                                <EditJadwalModal hari={hari} semuaZona={semuaZona} zonaTerpilihAwal={jadwalTersimpan[hari] || []} />
+                                <EditJadwalModal
+                                    hari={hari}
+                                    semuaZona={semuaZona}
+                                    zonaTerpilihAwal={jadwalTersimpan[hari] || []}
+                                />
                             </CardFooter>
                         </Card>
                     ))}

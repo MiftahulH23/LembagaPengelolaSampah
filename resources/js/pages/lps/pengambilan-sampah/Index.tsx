@@ -1,5 +1,4 @@
 import { Head, router } from '@inertiajs/react';
-// REVISI: Import hook dan tipe dari tanstack/react-table
 import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import React from 'react';
 import { toast } from 'sonner';
@@ -24,17 +23,28 @@ interface PageProps {
 }
 
 const PengambilanSampahIndex: React.FC<PageProps> = ({ checklistData: initialChecklist, selectedDate }) => {
+    // Optimistic UI state
     const [checklist, setChecklist] = React.useState(initialChecklist);
 
+    // Sinkronisasi state jika props dari Inertia berubah (misal saat ganti tanggal atau setelah save)
     React.useEffect(() => {
         setChecklist(initialChecklist);
     }, [initialChecklist]);
 
     const handleDateChange = (date: string) => {
-        router.get(route('pengambilan-sampah.index'), { date }, { preserveScroll: true, preserveState: true });
+        // --- REVISI UTAMA: Hapus 'preserveState: true' ---
+        router.get(
+            route('pengambilan-sampah.index'),
+            { date },
+            {
+                preserveScroll: true,
+                // Dengan menghapus preserveState, kita memastikan data selalu segar dari server
+            }
+        );
     };
 
     const handleMark = (zona: string, action: 'ambil' | 'batal') => {
+        // Optimistic UI update
         setChecklist((current) =>
             current.map((item) =>
                 item.zona === zona ? { ...item, status: action === 'ambil' ? 'Sudah Diambil' : 'Menunggu' } : item,
@@ -43,12 +53,11 @@ const PengambilanSampahIndex: React.FC<PageProps> = ({ checklistData: initialChe
 
         const requestOptions = {
             preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Status berhasil diperbarui.');
-            },
+            // onSuccess dan onError tidak perlu lagi karena redirect dari backend
+            // akan menangani refresh data dan notifikasi flash message
             onError: () => {
                 toast.error('Gagal memperbarui status. Memulihkan data.');
-                setChecklist(initialChecklist);
+                setChecklist(initialChecklist); // Kembalikan ke state awal jika gagal
             },
         };
 
@@ -95,7 +104,6 @@ const PengambilanSampahIndex: React.FC<PageProps> = ({ checklistData: initialChe
         },
     ];
 
-    // --- REVISI UTAMA: Buat instance tabel kosong untuk kasus "Tidak Ada Jadwal" ---
     const emptyTable = useReactTable({
         data: [],
         columns,
@@ -110,14 +118,12 @@ const PengambilanSampahIndex: React.FC<PageProps> = ({ checklistData: initialChe
             <div className="container">
                 <h1>Checklist Pengambilan Sampah per Zona</h1>
 
-                {/* Kondisi untuk menampilkan tabel atau card pesan kosong */}
                 {checklist.length > 0 ? (
-                    // Tampilkan DataTable seperti biasa jika ada data
                     <DataTable columns={columns} data={checklist}>
                         {({ table }) => (
                             <DataTableControls
                                 table={table}
-                                search={true} // Aktifkan search jika ada data
+                                search={true}
                                 action={
                                     <Input
                                         type="date"
@@ -130,11 +136,10 @@ const PengambilanSampahIndex: React.FC<PageProps> = ({ checklistData: initialChe
                         )}
                     </DataTable>
                 ) : (
-                    // Jika tidak ada data, render Controls dan Card secara terpisah
                     <div className="space-y-4">
                         <DataTableControls
-                            table={emptyTable} // Gunakan tabel kosong
-                            search={false} // Matikan search jika tidak ada data
+                            table={emptyTable}
+                            search={false}
                             action={
                                 <Input
                                     type="date"
@@ -150,7 +155,7 @@ const PengambilanSampahIndex: React.FC<PageProps> = ({ checklistData: initialChe
                                     <CalendarX2 className="h-8 w-8 text-muted-foreground" />
                                 </div>
                             </CardHeader>
-                            <CardContent className="">
+                            <CardContent>
                                 <CardTitle className="mb-2 text-xl font-semibold">Tidak Ada Jadwal</CardTitle>
                                 <p className="text-muted-foreground">
                                     Tidak ada jadwal pengambilan sampah untuk tanggal yang Anda pilih.

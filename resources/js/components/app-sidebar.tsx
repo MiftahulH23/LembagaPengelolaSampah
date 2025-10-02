@@ -3,7 +3,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { SharedData, User, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookA, BookOpen, CalendarClock, Coins, Folder, HandCoins, Landmark, Layers, LayoutGrid, Map, Recycle, UserRoundPlus } from 'lucide-react';
+import { BookA, BookOpen, CalendarClock, Coins, Folder, HandCoins, Landmark, Layers, LayoutGrid, Map, MapPinHouse, Recycle, UserRoundPlus } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -51,6 +51,11 @@ const lpsNavItems: NavItem[] = [
         title: 'Dashboard',
         href: '/dashboard',
         icon: LayoutGrid,
+    },
+    {
+        title: 'Zona',
+        href: '/zona',
+        icon: MapPinHouse,
     },
     {
         title: 'Data KK',

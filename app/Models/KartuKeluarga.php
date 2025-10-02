@@ -25,7 +25,11 @@ class KartuKeluarga extends Model
     }
 
     public function logPengambilanHariIni()
-{
-    return $this->hasOne(LogPengambilan::class);
-}
+    {
+        return $this->hasOne(LogPengambilan::class);
+    }
+    public function zona()
+    {
+        return $this->belongsTo(Zona::class);
+    }
 }

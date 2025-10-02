@@ -21,12 +21,17 @@ interface Pembayaran {
     tahun: string;
     bulan: number;
 }
+interface Zona {
+    id: number;
+    nama_zona: string;
+}
 interface KartuKeluarga {
     id: number;
     nama_kepala_keluarga: string;
     alamat: string;
     rt: string;
     rw: string;
+    zona:  Zona | null;
     pembayaran: Pembayaran[];
 }
 // REVISI: Tipe baru untuk prop iuran
@@ -189,7 +194,7 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
     const openPaymentModal = (kk: KartuKeluarga) => {
         // REVISI: Tambahkan pengecekan sebelum membuka modal
         if (nominalIuran === 0 && !iuranTerbaru) {
-            toast.error('Nominal iuran untuk kelurahan ini belum diatur. Hubungi Super Admin.');
+            toast.error('Nominal iuran untuk kelurahan ini belum diatur. Silahkan atur terlebih dahulu.');
             return;
         }
         setSelectedKK(kk);
@@ -210,7 +215,7 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
                 <div className="flex flex-col">
                     <span className="font-medium">{row.original.nama_kepala_keluarga}</span>
                     <span className="text-xs text-muted-foreground">
-                        {row.original.alamat}, RT {row.original.rt}/RW {row.original.rw}
+                        {row.original.zona?.nama_zona}, {row.original.alamat}, RT {row.original.rt}/RW {row.original.rw}, 
                     </span>
                 </div>
             ),
