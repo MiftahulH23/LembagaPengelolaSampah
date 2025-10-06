@@ -31,12 +31,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index');
     Route::post('/pembayaran/{kartuKeluarga}', [PembayaranController::class, 'store'])->name('pembayaran.store');
-     Route::get('/jadwal-pengambilan', [JadwalController::class, 'index'])->name('jadwal.index');
+    Route::get('/jadwal-pengambilan', [JadwalController::class, 'index'])->name('jadwal.index');
     Route::post('/jadwal-pengambilan', [JadwalController::class, 'store'])->name('jadwal.store');
 
-     Route::get('/pengambilan-sampah', [PengambilanSampahController::class, 'index'])->name('pengambilan-sampah.index');
+    Route::get('/pengambilan-sampah', [PengambilanSampahController::class, 'index'])->name('pengambilan-sampah.index');
     Route::post('/pengambilan-sampah', [PengambilanSampahController::class, 'store'])->name('pengambilan-sampah.store');
     Route::delete('/pengambilan-sampah', [PengambilanSampahController::class, 'destroy'])->name('pengambilan-sampah.destroy');
+    Route::post('/kartukeluarga/import', [KartukeluargaController::class, 'import'])->name('kartukeluarga.import');
 });
 
 

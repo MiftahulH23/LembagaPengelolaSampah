@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Iuran;
 use App\Models\KartuKeluarga;
 use App\Models\Pembayaran;
+use App\Models\Zona;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,17 +28,20 @@ class PembayaranController extends Controller
             'pembayaran' => fn($q) => $q->where('tahun', $selectedYear)
         ])
             ->where('kelurahan_id', $kelurahanId)
-            ->orderBy('nama_kepala_keluarga')->get();
+            ->orderBy('nama')->get();
 
         // REVISI: Ambil data iuran terbaru untuk kelurahan yang login
         $iuranTerbaru = Iuran::where('kelurahan_id', $kelurahanId)
             ->orderBy('created_at', 'desc')
             ->first();
 
+        $zonas = Zona::all();
+
         return Inertia::render('lps/pembayaran/Index', [
             'kartuKeluarga' => $kartuKeluarga,
             'selectedYear' => (int) $selectedYear,
             'iuranTerbaru' => $iuranTerbaru, // Kirim iuran terbaru sebagai prop
+            'zonas' => $zonas,
         ]);
     }
     /**

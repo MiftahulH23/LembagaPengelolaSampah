@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { ColumnDef } from '@tanstack/react-table';
+import { ColumnDef, FilterFnOption } from '@tanstack/react-table';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { Check, HandCoins, X } from 'lucide-react';
+import { DataTableFilter } from '@/components/data-table/data-table-filter';
 
 // --- Tipe Data ---
 interface Pembayaran {
@@ -27,7 +28,7 @@ interface Zona {
 }
 interface KartuKeluarga {
     id: number;
-    nama_kepala_keluarga: string;
+    nama: string;
     alamat: string;
     rt: string;
     rw: string;
@@ -42,7 +43,8 @@ interface Iuran {
 interface IuranPageProps {
     kartuKeluarga: KartuKeluarga[];
     selectedYear: number;
-    iuranTerbaru: Iuran | null; // Prop baru dari controller
+    iuranTerbaru: Iuran | null;
+    zonas: Zona[];
 }
 
 function DialogTambahPembayaran({
@@ -121,7 +123,7 @@ function DialogTambahPembayaran({
             <DialogHeader>
                 <DialogTitle>Input Pembayaran</DialogTitle>
                 <DialogDescription>
-                    Untuk: <strong>{selectedKK?.nama_kepala_keluarga}</strong> <br />
+                    Untuk: <strong>{selectedKK?.nama}</strong> <br />
                     Tahun Iuran: <strong>{selectedYear}</strong>
                 </DialogDescription>
             </DialogHeader>
@@ -185,7 +187,7 @@ function DialogTambahPembayaran({
     );
 }
 
-const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iuranTerbaru }) => {
+const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iuranTerbaru, zonas }) => {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [selectedKK, setSelectedKK] = useState<KartuKeluarga | null>(null);
     // REVISI: Ambil nominal iuran dari prop, dengan fallback 0
@@ -209,16 +211,18 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
 
     const columns: ColumnDef<KartuKeluarga>[] = [
         {
-            accessorKey: 'nama_kepala_keluarga',
+            id: 'id',
+            accessorKey: 'zona.nama_zona',
             header: 'Nama Kepala Keluarga',
             cell: ({ row }) => (
                 <div className="flex flex-col">
-                    <span className="font-medium">{row.original.nama_kepala_keluarga}</span>
+                    <span className="font-medium">{row.original.nama}</span>
                     <span className="text-xs text-muted-foreground">
                         {row.original.zona?.nama_zona}, {row.original.alamat}, RT {row.original.rt}/RW {row.original.rw}, 
                     </span>
                 </div>
             ),
+            filterFn: 'checkbox' as FilterFnOption<KartuKeluarga>,
         },
         ...months.map(
             (monthName, index) =>
@@ -247,6 +251,7 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
     };
 
     const breadcrumb = [{ title: 'Data Iuran', href: '/pembayaran' }];
+    const dataZona = zonas.map((zona) => zona.nama_zona);
 
     return (
         <AppLayout breadcrumbs={breadcrumb}>
@@ -274,7 +279,11 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
                                     </Select>
                                 </div>
                             }
-                        />
+                        >
+                            <DataTableFilter table={table} extend={[{
+                                id: 'id', label: 'Zona', data: dataZona
+                            }]} />
+                        </DataTableControls>
                     )}
                 </DataTable>
             </div>

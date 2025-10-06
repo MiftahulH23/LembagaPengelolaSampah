@@ -13,18 +13,19 @@ return new class extends Migration
     {
         Schema::create('kartu_keluarga', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('kecamatan_id');
-            $table->foreign('kecamatan_id')->references('id')->on('kecamatan')->onDelete('cascade');
-            $table->unsignedBigInteger('kelurahan_id');
-            $table->foreign('kelurahan_id')->references('id')->on('kelurahan')->onDelete('cascade');
-            $table->string('nomor_kk')->unique();
-            $table->string('nik')->unique();
-            $table->string('nama_kepala_keluarga');
-            $table->string('alamat');
-            $table->string('rt');
-            $table->string('rw');
-            $table->unsignedBigInteger('zona_id');
-            $table->foreign('zona_id')->references('id')->on('zona')->onDelete('cascade');
+            $table->foreignId('kecamatan_id')->constrained('kecamatan')->onDelete('cascade');
+            $table->foreignId('kelurahan_id')->constrained('kelurahan')->onDelete('cascade');
+            $table->foreignId('zona_id')->constrained('zona')->onDelete('cascade');
+            
+            // Kolom disesuaikan dengan format Excel
+            $table->string('nama');
+            $table->string('no_hp')->nullable();
+            $table->string('alamat')->nullable();
+            $table->string('blok')->nullable();
+            $table->string('rt')->nullable();
+            $table->string('rw')->nullable();
+            $table->string('no_rumah')->nullable();
+
             $table->timestamps();
         });
     }

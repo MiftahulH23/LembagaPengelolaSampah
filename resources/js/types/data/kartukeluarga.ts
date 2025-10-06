@@ -3,19 +3,25 @@ import { Zona } from './zona';
 
 export namespace KartuKeluarga {
     export interface Default {
-        id: string;
-        nik: string;
-        nomor_kk: string; // Baru
-        nama_kepala_keluarga: string;
-        alamat: string;
-        rt: string;
-        rw: string;
-        zona_id: string; // Baru
-        zona?: Zona.Default
-        kelurahan_id: string;
+        id: number;
+        // Kolom disesuaikan dengan skema database
+        nama: string;
+        no_hp: string | null;
+        alamat: string | null;
+        blok: string | null;
+        rt: string | null;
+        rw: string | null;
+        no_rumah: string | null;
+
+        // Foreign Keys & Relasi
+        zona_id: number;
+        zona?: Zona.Default;
+        kelurahan_id: number;
         kelurahan?: Wilayah.Kelurahan;
-        kecamatan_id: string;
+        kecamatan_id: number;
         kecamatan?: Wilayah.Kecamatan;
+        
+        // Timestamps
         created_at: string;
         updated_at: string;
     }

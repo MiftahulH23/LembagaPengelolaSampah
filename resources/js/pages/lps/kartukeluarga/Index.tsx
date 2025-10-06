@@ -1,7 +1,7 @@
 import { DataTable, DataTableControls } from '@/components/data-table';
 import { DataTableFilter } from '@/components/data-table/data-table-filter';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -9,11 +9,11 @@ import AppLayout from '@/layouts/app-layout';
 import { KartuKeluarga } from '@/types/data/kartukeluarga';
 import { Head, router, useForm } from '@inertiajs/react';
 import { ColumnDef, FilterFnOption } from '@tanstack/react-table';
-import { SquarePen, Trash2, TriangleAlert } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { SquarePen, Trash2, TriangleAlert, Upload } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-// Tipe data yang diterima dari Controller
+// --- Tipe Data dari Controller ---
 interface Kecamatan {
     id: number;
     nama_kecamatan: string;
@@ -28,44 +28,209 @@ interface Zona {
     nama_zona: string;
 }
 
-const Index = (props: {
-    kartukeluarga: KartuKeluarga.Default[];
-    kecamatan: Kecamatan[];
-    kelurahan: Kelurahan[];
-    zonas: Zona[]; // <-- Prop baru
-}) => {
+const ImportModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+    const { data, setData, post, processing, errors, reset } = useForm<{ file: File | null }>({ file: null });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(route('kartukeluarga.import'), {
+            onSuccess: () => {
+                onClose();
+                reset();
+            },
+            onError: (err: any) => {
+                toast.error(err.file || 'Terjadi kesalahan saat mengimpor file.');
+            },
+        });
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Import Data Kartu Keluarga</DialogTitle>
+                    <DialogDescription>
+                        Unggah file Excel (.xlsx). Sistem akan membaca setiap sheet sebagai Zona dan mengimpor data di dalamnya.
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                    <div>
+                        <Label htmlFor="file">File Excel</Label>
+                        <Input
+                            id="file"
+                            type="file"
+                            accept=".xlsx, .xls"
+                            onChange={(e) => setData('file', e.target.files ? e.target.files[0] : null)}
+                        />
+                        {errors.file && <p className="mt-1 text-sm text-red-500">{errors.file}</p>}
+                    </div>
+                    <DialogFooter>
+                        <Button type="submit" disabled={!data.file || processing}>
+                            {processing ? 'Mengimpor...' : 'Mulai Import'}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+const FormModalContent = ({ isEdit = false, data, setData, errors, kecamatan, kelurahan, zonas, filteredKelurahan }: any) => {
+    return (
+        <div className="space-y-4">
+            {/* --- PERUBAHAN DI SINI --- */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                    <Label htmlFor={isEdit ? 'edit_nama' : 'nama'}>Nama</Label>
+                    <Input id={isEdit ? 'edit_nama' : 'nama'} value={data.nama} onChange={(e) => setData('nama', e.target.value)} />
+                    {errors.nama && <p className="text-sm text-red-500">{errors.nama}</p>}
+                </div>
+                <div>
+                    <Label htmlFor={isEdit ? 'edit_no_hp' : 'no_hp'}>No. HP</Label>
+                    <Input id={isEdit ? 'edit_no_hp' : 'no_hp'} value={data.no_hp} onChange={(e) => setData('no_hp', e.target.value)} />
+                    {errors.no_hp && <p className="text-sm text-red-500">{errors.no_hp}</p>}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                    <Label htmlFor={isEdit ? 'edit_kecamatan_id' : 'kecamatan_id'}>Kecamatan</Label>
+                    <Select
+                        value={data.kecamatan_id}
+                        onValueChange={(value) => {
+                            setData('kecamatan_id', value);
+                            setData('kelurahan_id', '');
+                        }}
+                    >
+                        <SelectTrigger id={isEdit ? 'edit_kecamatan_id' : 'kecamatan_id'}>
+                            <SelectValue placeholder="Pilih Kecamatan" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {kecamatan.map((option: Kecamatan) => (
+                                <SelectItem key={option.id} value={String(option.id)}>
+                                    {option.nama_kecamatan}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {errors.kecamatan_id && <p className="text-sm text-red-500">{errors.kecamatan_id}</p>}
+                </div>
+                <div>
+                    <Label htmlFor={isEdit ? 'edit_kelurahan_id' : 'kelurahan_id'}>Kelurahan</Label>
+                    <Select
+                        value={data.kelurahan_id}
+                        onValueChange={(value) => setData('kelurahan_id', value)}
+                        disabled={!data.kecamatan_id || filteredKelurahan.length === 0}
+                    >
+                        <SelectTrigger id={isEdit ? 'edit_kelurahan_id' : 'kelurahan_id'}>
+                            <SelectValue placeholder="Pilih Kelurahan" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {filteredKelurahan.map((option: Kelurahan) => (
+                                <SelectItem key={option.id} value={String(option.id)}>
+                                    {option.nama_kelurahan}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {errors.kelurahan_id && <p className="text-sm text-red-500">{errors.kelurahan_id}</p>}
+                </div>
+            </div>
+
+            <div>
+                <Label htmlFor={isEdit ? 'edit_alamat' : 'alamat'}>Alamat</Label>
+                <Input id={isEdit ? 'edit_alamat' : 'alamat'} value={data.alamat} onChange={(e) => setData('alamat', e.target.value)} />
+                {errors.alamat && <p className="text-sm text-red-500">{errors.alamat}</p>}
+            </div>
+
+            {/* --- PERUBAHAN DI SINI --- */}
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+                <div>
+                    <Label htmlFor={isEdit ? 'edit_blok' : 'blok'}>Blok</Label>
+                    <Input id={isEdit ? 'edit_blok' : 'blok'} value={data.blok} onChange={(e) => setData('blok', e.target.value)} />
+                    {errors.blok && <p className="text-sm text-red-500">{errors.blok}</p>}
+                </div>
+                <div>
+                    <Label htmlFor={isEdit ? 'edit_no_rumah' : 'no_rumah'}>No. Rumah</Label>
+                    <Input id={isEdit ? 'edit_no_rumah' : 'no_rumah'} value={data.no_rumah} onChange={(e) => setData('no_rumah', e.target.value)} />
+                    {errors.no_rumah && <p className="text-sm text-red-500">{errors.no_rumah}</p>}
+                </div>
+                <div>
+                    <Label htmlFor={isEdit ? 'edit_rt' : 'rt'}>RT</Label>
+                    <Input id={isEdit ? 'edit_rt' : 'rt'} value={data.rt} onChange={(e) => setData('rt', e.target.value)} />
+                    {errors.rt && <p className="text-sm text-red-500">{errors.rt}</p>}
+                </div>
+                <div>
+                    <Label htmlFor={isEdit ? 'edit_rw' : 'rw'}>RW</Label>
+                    <Input id={isEdit ? 'edit_rw' : 'rw'} value={data.rw} onChange={(e) => setData('rw', e.target.value)} />
+                    {errors.rw && <p className="text-sm text-red-500">{errors.rw}</p>}
+                </div>
+                <div className="col-span-2 md:col-span-1">
+                    <Label htmlFor={isEdit ? 'edit_zona_id' : 'zona_id'}>Zona</Label>
+                    <Select value={data.zona_id} onValueChange={(value) => setData('zona_id', value)}>
+                        <SelectTrigger id={isEdit ? 'edit_zona_id' : 'zona_id'}>
+                            <SelectValue placeholder="Pilih Zona" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {zonas.map((option: Zona) => (
+                                <SelectItem key={option.id} value={String(option.id)}>
+                                    {option.nama_zona}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {errors.zona_id && <p className="text-sm text-red-500">{errors.zona_id}</p>}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- Komponen Utama Halaman ---
+const Index = (props: { kartukeluarga: KartuKeluarga.Default[]; kecamatan: Kecamatan[]; kelurahan: Kelurahan[]; zonas: Zona[] }) => {
     const { kartukeluarga, kecamatan, kelurahan, zonas } = props;
 
-    // --- REVISI: Sesuaikan useForm dengan 'zona_id' ---
+    // --- PERUBAHAN DI SINI: Tambahkan rt dan rw ---
     const { data, setData, post, processing, errors, reset } = useForm({
-        nik: '',
-        nomor_kk: '',
-        nama_kepala_keluarga: '',
+        nama: '',
+        no_hp: '',
         alamat: '',
+        blok: '',
+        no_rumah: '',
         rt: '',
         rw: '',
-        zona_id: '', // <-- REVISI
+        zona_id: '',
         kelurahan_id: '',
         kecamatan_id: '',
     });
 
-    const { data: editData, setData: setEditData, put, processing: editProcessing, errors: editErrors, reset: resetEditForm } = useForm({
-        nik: '',
-        nomor_kk: '',
-        nama_kepala_keluarga: '',
+    // --- PERUBAHAN DI SINI: Tambahkan rt dan rw ---
+    const {
+        data: editData,
+        setData: setEditData,
+        put,
+        processing: editProcessing,
+        errors: editErrors,
+        reset: resetEditForm,
+    } = useForm({
+        nama: '',
+        no_hp: '',
         alamat: '',
+        blok: '',
+        no_rumah: '',
         rt: '',
         rw: '',
-        zona_id: '', // <-- REVISI
+        zona_id: '',
         kelurahan_id: '',
         kecamatan_id: '',
     });
 
-    // State lainnya tetap sama
+    // State lainnya
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedKartuKeluarga, setSelectedKartuKeluarga] = useState<KartuKeluarga.Default | null>(null);
-    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
     const [filteredKelurahan, setFilteredKelurahan] = useState<Kelurahan[]>([]);
     const [filteredEditKelurahan, setFilteredEditKelurahan] = useState<Kelurahan[]>([]);
 
@@ -76,8 +241,7 @@ const Index = (props: {
         } else {
             setFilteredKelurahan([]);
         }
-        setData('kelurahan_id', '');
-    }, [data.kecamatan_id, kelurahan]);
+    }, [data.kecamatan_id]);
 
     useEffect(() => {
         if (editData.kecamatan_id) {
@@ -86,24 +250,18 @@ const Index = (props: {
         } else {
             setFilteredEditKelurahan([]);
         }
-    }, [editData.kecamatan_id, kelurahan]);
+    }, [editData.kecamatan_id]);
 
     const columns: ColumnDef<KartuKeluarga.Default>[] = [
-        // ... (kolom nik, nomor_kk, nama_kepala_keluarga tetap sama)
-        { accessorKey: 'nik', header: 'NIK' },
-        { accessorKey: 'nomor_kk', header: 'No. KK' },
-        { accessorKey: 'nama_kepala_keluarga', header: 'Nama Kepala Keluarga' },
-        { id: 'kelurahan_id', accessorKey: 'kelurahan.nama_kelurahan', header: 'Kelurahan' },
-        { id: 'kecamatan_id', accessorKey: 'kecamatan.nama_kecamatan', header: 'Kecamatan' },
+        { accessorKey: 'nama', header: 'Nama' },
+        { accessorKey: 'no_hp', header: 'No. HP' },
+        { id: 'zona_id', accessorKey: 'zona.nama_zona', header: 'Zona', filterFn: 'checkbox' as FilterFnOption<KartuKeluarga.Default> },
         { accessorKey: 'alamat', header: 'Alamat' },
+        { accessorKey: 'blok', header: 'Blok' },
+        { accessorKey: 'no_rumah', header: 'No. Rumah' },
         { accessorKey: 'rt', header: 'RT' },
         { accessorKey: 'rw', header: 'RW' },
-        // --- REVISI: Tampilkan nama zona dari relasi ---
-        {
-            id: 'zona_id',
-            accessorKey: 'zona.nama_zona',
-            header: 'Zona',
-        },
+        { id: 'kelurahan_id', accessorKey: 'kelurahan.nama_kelurahan', header: 'Kelurahan' },
         {
             id: 'aksi',
             header: 'Aksi',
@@ -127,22 +285,24 @@ const Index = (props: {
             onSuccess: () => {
                 reset();
                 setIsAddModalOpen(false);
-                toast.success('Kartu Keluarga berhasil ditambahkan');
+                toast.success('Data warga berhasil ditambahkan.');
             },
-            onError: () => toast.error('Gagal menambahkan Kartu Keluarga.'),
+            onError: () => toast.error('Gagal menambahkan data. Periksa kembali form Anda.'),
         });
     };
 
     const openEditModal = (kk: KartuKeluarga.Default) => {
         setSelectedKartuKeluarga(kk);
+        // --- PERUBAHAN DI SINI: Tambahkan rt dan rw ---
         setEditData({
-            nik: kk.nik,
-            nomor_kk: kk.nomor_kk,
-            nama_kepala_keluarga: kk.nama_kepala_keluarga,
-            alamat: kk.alamat,
-            rt: kk.rt,
-            rw: kk.rw,
-            zona_id: String(kk.zona_id), // <-- REVISI
+            nama: kk.nama || '',
+            no_hp: kk.no_hp || '',
+            alamat: kk.alamat || '',
+            blok: kk.blok || '',
+            no_rumah: kk.no_rumah || '',
+            rt: kk.rt || '',
+            rw: kk.rw || '',
+            zona_id: String(kk.zona_id),
             kelurahan_id: String(kk.kelurahan_id),
             kecamatan_id: String(kk.kecamatan_id),
         });
@@ -150,7 +310,7 @@ const Index = (props: {
         setFilteredEditKelurahan(initialFiltered);
         setIsEditModalOpen(true);
     };
-    
+
     const handleEditSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedKartuKeluarga) return;
@@ -159,180 +319,136 @@ const Index = (props: {
             onSuccess: () => {
                 resetEditForm();
                 setIsEditModalOpen(false);
-                toast.success('Kartu Keluarga berhasil diubah');
+                toast.success('Data warga berhasil diubah.');
             },
-            onError: () => toast.error('Gagal mengubah Kartu Keluarga.'),
+            onError: () => toast.error('Gagal mengubah data. Periksa kembali form Anda.'),
         });
     };
 
-    const handleDelete = (id: string) => {
+    const handleDelete = (id: number) => {
         router.delete(route('kartukeluarga.destroy', id), {
             preserveScroll: true,
-            onSuccess: () => toast.success('Kartu Keluarga berhasil dihapus'),
-            onError: () => toast.error('Gagal menghapus Kartu Keluarga'),
+            onSuccess: () => toast.success('Data warga berhasil dihapus.'),
+            onError: () => toast.error('Gagal menghapus data.'),
             onFinish: () => setDeleteId(null),
         });
     };
 
-    const breadcrumb = [{ title: 'Kartu Keluarga', href: '/kartukeluarga' }];
+    const breadcrumb = [{ title: 'Data Warga', href: '/kartukeluarga' }];
 
-    // --- FORM MODAL UTAMA ---
-    const FormModalContent = ({ isEdit = false }: { isEdit?: boolean }) => {
-        // Pilih state yang sesuai
-        const currentData = isEdit ? editData : data;
-        const setCurrentData = isEdit ? setEditData : setData;
-        const currentErrors = isEdit ? editErrors : errors;
-        const currentFilteredKelurahan = isEdit ? filteredEditKelurahan : filteredKelurahan;
-
-        return (
-            <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div>
-                        <Label htmlFor={isEdit ? 'edit_nik' : 'nik'}>NIK</Label>
-                        <Input id={isEdit ? 'edit_nik' : 'nik'} value={currentData.nik} onChange={(e) => setCurrentData('nik', e.target.value)} />
-                        {currentErrors.nik && <p className="text-sm text-red-500">{currentErrors.nik}</p>}
-                    </div>
-                    <div>
-                        <Label htmlFor={isEdit ? 'edit_nomor_kk' : 'nomor_kk'}>Nomor Kartu Keluarga</Label>
-                        <Input id={isEdit ? 'edit_nomor_kk' : 'nomor_kk'} value={currentData.nomor_kk} onChange={(e) => setCurrentData('nomor_kk', e.target.value)} />
-                        {currentErrors.nomor_kk && <p className="text-sm text-red-500">{currentErrors.nomor_kk}</p>}
-                    </div>
-                </div>
-                <div>
-                    <Label htmlFor={isEdit ? 'edit_nama_kepala_keluarga' : 'nama_kepala_keluarga'}>Nama Kepala Keluarga</Label>
-                    <Input id={isEdit ? 'edit_nama_kepala_keluarga' : 'nama_kepala_keluarga'} value={currentData.nama_kepala_keluarga} onChange={(e) => setCurrentData('nama_kepala_keluarga', e.target.value)} />
-                    {currentErrors.nama_kepala_keluarga && <p className="text-sm text-red-500">{currentErrors.nama_kepala_keluarga}</p>}
-                </div>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div>
-                        <Label htmlFor={isEdit ? 'edit_kecamatan_id' : 'kecamatan_id'}>Kecamatan</Label>
-                        <Select
-                            value={currentData.kecamatan_id}
-                            onValueChange={(value) => {
-                                setCurrentData('kecamatan_id', value);
-                                setCurrentData('kelurahan_id', '');
-                            }}
-                        >
-                            <SelectTrigger id={isEdit ? 'edit_kecamatan_id' : 'kecamatan_id'}><SelectValue placeholder="Pilih Kecamatan" /></SelectTrigger>
-                            <SelectContent>
-                                {kecamatan.map((option) => (
-                                    <SelectItem key={option.id} value={String(option.id)}>{option.nama_kecamatan}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {currentErrors.kecamatan_id && <p className="text-sm text-red-500">{currentErrors.kecamatan_id}</p>}
-                    </div>
-                    <div>
-                        <Label htmlFor={isEdit ? 'edit_kelurahan_id' : 'kelurahan_id'}>Kelurahan</Label>
-                        <Select
-                            value={currentData.kelurahan_id}
-                            onValueChange={(value) => setCurrentData('kelurahan_id', value)}
-                            disabled={!currentData.kecamatan_id || currentFilteredKelurahan.length === 0}
-                        >
-                            <SelectTrigger id={isEdit ? 'edit_kelurahan_id' : 'kelurahan_id'}><SelectValue placeholder="Pilih Kelurahan" /></SelectTrigger>
-                            <SelectContent>
-                                {currentFilteredKelurahan.map((option) => (
-                                    <SelectItem key={option.id} value={String(option.id)}>{option.nama_kelurahan}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {currentErrors.kelurahan_id && <p className="text-sm text-red-500">{currentErrors.kelurahan_id}</p>}
-                    </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                    <div>
-                        <Label htmlFor={isEdit ? 'edit_rt' : 'rt'}>RT</Label>
-                        <Input id={isEdit ? 'edit_rt' : 'rt'} value={currentData.rt} onChange={(e) => setCurrentData('rt', e.target.value)} />
-                        {currentErrors.rt && <p className="text-sm text-red-500">{currentErrors.rt}</p>}
-                    </div>
-                    <div>
-                        <Label htmlFor={isEdit ? 'edit_rw' : 'rw'}>RW</Label>
-                        <Input id={isEdit ? 'edit_rw' : 'rw'} value={currentData.rw} onChange={(e) => setCurrentData('rw', e.target.value)} />
-                        {currentErrors.rw && <p className="text-sm text-red-500">{currentErrors.rw}</p>}
-                    </div>
-                    <div>
-                        <Label htmlFor={isEdit ? 'edit_zona_id' : 'zona_id'}>Zona</Label>
-                        <Select value={currentData.zona_id} onValueChange={(value) => setCurrentData('zona_id', value)}>
-                            <SelectTrigger id={isEdit ? 'edit_zona_id' : 'zona_id'}><SelectValue placeholder="Pilih Zona" /></SelectTrigger>
-                            <SelectContent>
-                                {zonas.map((option) => (
-                                    <SelectItem key={option.id} value={String(option.id)}>{option.nama_zona}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {currentErrors.zona_id && <p className="text-sm text-red-500">{currentErrors.zona_id}</p>}
-                    </div>
-                </div>
-                <div>
-                    <Label htmlFor={isEdit ? 'edit_alamat' : 'alamat'}>Alamat</Label>
-                    <Input id={isEdit ? 'edit_alamat' : 'alamat'} value={currentData.alamat} onChange={(e) => setCurrentData('alamat', e.target.value)} />
-                    {currentErrors.alamat && <p className="text-sm text-red-500">{currentErrors.alamat}</p>}
-                </div>
-            </div>
-        );
-    };
-
+    const dataZona = zonas.map((zona) => ({ value: String(zona.nama_zona), label: zona.nama_zona }));
     return (
         <AppLayout breadcrumbs={breadcrumb}>
-            <Head title="Kartu Keluarga" />
+            <Head title="Data Warga" />
             <div className="container">
-                <h1>Kartu Keluarga</h1>
+                <h1>Data Warga</h1>
                 <DataTable columns={columns} data={kartukeluarga}>
                     {({ table }) => (
                         <DataTableControls
                             table={table}
-                            action={<Button onClick={() => { reset(); setIsAddModalOpen(true); }}>Tambah</Button>}
-                        />
+                            action={
+                                <div className="flex gap-2">
+                                    <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>
+                                        <Upload className="mr-2 h-4 w-4" /> Import Excel
+                                    </Button>
+                                    <Button
+                                        onClick={() => {
+                                            data.nama = '';
+                                            data.no_hp = '';
+                                            data.alamat = '';
+                                            data.blok = '';
+                                            data.no_rumah = '';
+                                            data.rt = '';
+                                            data.rw = '';
+                                            data.zona_id = '';
+                                            data.kelurahan_id = '';
+                                            data.kecamatan_id = '';
+                                            setIsAddModalOpen(true);
+                                        }}
+                                    >
+                                        Tambah
+                                    </Button>
+                                </div>
+                            }
+                        >
+                            <DataTableFilter table={table} extend={[{ id: 'zona_id', label: 'Zona', data: dataZona }]} />
+                        </DataTableControls>
                     )}
                 </DataTable>
             </div>
 
-            {/* Modal Tambah */}
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-                <DialogContent className="sm:max-w-2xl">
-                    <DialogTitle>Tambah Kartu Keluarga</DialogTitle>
+                <DialogContent className="sm:max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>Tambah Data Warga</DialogTitle>
+                        <DialogDescription>Isi detail di bawah ini untuk menambahkan data baru.</DialogDescription>
+                    </DialogHeader>
                     <form onSubmit={handleSubmit}>
-                        <FormModalContent />
-                        <div className="mt-4 flex justify-end">
+                        <FormModalContent
+                            data={data}
+                            setData={setData}
+                            errors={errors}
+                            kecamatan={kecamatan}
+                            kelurahan={kelurahan}
+                            zonas={zonas}
+                            filteredKelurahan={filteredKelurahan}
+                        />
+                        <DialogFooter className="mt-4">
                             <Button type="submit" disabled={processing}>
                                 {processing ? 'Menyimpan...' : 'Simpan'}
                             </Button>
-                        </div>
+                        </DialogFooter>
                     </form>
                 </DialogContent>
             </Dialog>
 
-            {/* Modal Edit */}
             <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                <DialogContent className="sm:max-w-2xl" onOpenAutoFocus={(e) => e.preventDefault()}>
-                    <DialogTitle>Edit Kartu Keluarga</DialogTitle>
+                <DialogContent className="sm:max-w-3xl" onOpenAutoFocus={(e) => e.preventDefault()}>
+                    <DialogHeader>
+                        <DialogTitle>Edit Data Warga</DialogTitle>
+                        <DialogDescription>Ubah detail di bawah ini untuk memperbarui data.</DialogDescription>
+                    </DialogHeader>
                     <form onSubmit={handleEditSubmit}>
-                        <FormModalContent isEdit />
-                        <div className="mt-4 flex justify-end">
+                        <FormModalContent
+                            isEdit
+                            data={editData}
+                            setData={setEditData}
+                            errors={editErrors}
+                            kecamatan={kecamatan}
+                            kelurahan={kelurahan}
+                            zonas={zonas}
+                            filteredKelurahan={filteredEditKelurahan}
+                        />
+                        <DialogFooter className="mt-4">
                             <Button type="submit" disabled={editProcessing}>
-                                {editProcessing ? 'Menyimpan...' : 'Simpan'}
+                                {editProcessing ? 'Menyimpan...' : 'Simpan Perubahan'}
                             </Button>
-                        </div>
+                        </DialogFooter>
                     </form>
                 </DialogContent>
             </Dialog>
 
-            {/* Modal Hapus */}
             <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
                 <DialogContent>
                     <div className="flex flex-col items-center justify-center gap-3 pt-4">
                         <TriangleAlert size={48} className="text-destructive" />
                         <DialogTitle className="text-center">Konfirmasi Hapus</DialogTitle>
-                        <DialogDescription className="text-center">Apakah Anda yakin ingin menghapus data ini?</DialogDescription>
+                        <DialogDescription className="text-center">
+                            Apakah Anda yakin ingin menghapus data ini? Aksi ini tidak dapat dibatalkan.
+                        </DialogDescription>
                     </div>
                     <div className="mt-4 flex justify-center gap-2">
-                        <Button variant="outline" onClick={() => setDeleteId(null)}>Batal</Button>
+                        <Button variant="outline" onClick={() => setDeleteId(null)}>
+                            Batal
+                        </Button>
                         <Button variant="destructive" onClick={() => deleteId && handleDelete(deleteId)}>
                             Hapus
                         </Button>
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <ImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} />
         </AppLayout>
     );
 };
