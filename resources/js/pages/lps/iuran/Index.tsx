@@ -7,7 +7,6 @@ import AppLayout from '@/layouts/app-layout';
 import { Iuran } from '@/types/data/iuran';
 import { Head, router, useForm } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { set } from 'date-fns';
 import { SquarePen, Trash2, TriangleAlert } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
@@ -17,7 +16,7 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
     const { data, setData, post, processing, errors, reset } = useForm({
         nominal_iuran: '',
     });
-   const { data: editData, setData: setEditData, put, processing: editProcessing, errors: editErrors } = useForm({ nominal_iuran: '' });
+    const { data: editData, setData: setEditData, put, processing: editProcessing, errors: editErrors } = useForm({ nominal_iuran: '' });
 
     const breadcrumb = [{ title: 'Iuran', href: '/iuran' }];
 
@@ -30,29 +29,30 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
         {
             accessorKey: 'nominal_iuran',
             header: 'Nominal Iuran',
+            cell: ({ row }) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(row.original.nominal_iuran),
         },
         {
             id: 'aksi',
             header: 'Aksi',
-            cell:({row}) => (
-                <div className='flex gap-2'>
-                    <Button variant="outline" onClick={() =>
-                        openEditModal(row.original)
-                    }>
+            cell: ({ row }) => (
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => openEditModal(row.original)}>
                         <SquarePen />
                     </Button>
                     <Button variant="destructive" onClick={() => setDeleteId(row.original.id)}>
                         <Trash2 />
                     </Button>
                 </div>
-            )
-        }
+            ),
+        },
     ];
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedIuran, setSelectedIuran] = useState<Iuran.Default | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [price, setPrice] = useState<string>();
+    const [displayJumlah, setDisplayJumlah] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -72,8 +72,8 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
     const openEditModal = (iuran: Iuran.Default) => {
         setSelectedIuran(iuran);
         setEditData({ nominal_iuran: String(iuran.nominal_iuran) });
-        setIsEditModalOpen(true); 
-    }
+        setIsEditModalOpen(true);
+    };
 
     const handleEditSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,8 +87,8 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
                 toast.error('Terjadi kesalahan saat memperbarui Iuran');
             },
         });
-    }
-    
+    };
+
     const handleDelete = (id: string) => {
         router.delete(route('iuran.destroy', id), {
             preserveScroll: true,
@@ -99,7 +99,7 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
                 toast.error('Terjadi kesalahan saat menghapus Iuran');
             },
         });
-    }
+    };
     return (
         <AppLayout breadcrumbs={breadcrumb}>
             <Head title="Iuran" />
@@ -124,11 +124,16 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
                                 <Input
                                     type="text"
                                     id="nominal_iuran"
-                                    value={data.nominal_iuran}
-                                    onChange={(e) => setData('nominal_iuran', e.target.value)}
+                                    value={displayJumlah}
+                                    onChange={(e) => {
+                                    const raw = e.target.value.replace(/\./g, '').replace(/[^0-9]/g, '');
+                                    setData('nominal_iuran', raw);
+                                    setDisplayJumlah(new Intl.NumberFormat('id-ID').format(Number(raw)));
+                                }}
                                 />
+                                {/* {errors.nominal_iuran && <p className="text-sm text-red-600">{errors.nominal_iuran}</p>} */}
                             </div>
-                            <div className='flex justify-end'>
+                            <div className="flex justify-end">
                                 <Button type="submit" disabled={processing}>
                                     {processing ? 'Menyimpan...' : 'Simpan'}
                                 </Button>
@@ -150,7 +155,7 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
                                     onChange={(e) => setEditData('nominal_iuran', e.target.value)}
                                 />
                             </div>
-                            <div className='flex justify-end'>
+                            <div className="flex justify-end">
                                 <Button type="submit" disabled={editProcessing}>
                                     {editProcessing ? 'Menyimpan...' : 'Simpan'}
                                 </Button>
@@ -184,7 +189,6 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
                         </div>
                     </DialogContent>
                 </Dialog>
-
             </div>
         </AppLayout>
     );
