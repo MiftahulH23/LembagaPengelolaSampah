@@ -104,7 +104,7 @@ class PembayaranController extends Controller
             Pembayaran::insert($dataToInsert);
         }
 
-        return to_route('pembayaran.index', ['year' => $request->tahun])
+        return redirect()->route('pembayaran.index', ['year' => $request->tahun])
             ->with('success', 'Pembayaran berhasil disimpan.');
     }
 

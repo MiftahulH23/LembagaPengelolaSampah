@@ -39,7 +39,6 @@ class DataWargaImport implements ToModel, WithHeadingRow, WithBatchInserts, With
         return new KartuKeluarga([
             'nama'         => $nama,
             'no_hp'        => $row['no_hp'] ?? $row['no hp'] ?? null,
-            'alamat'       => $row['alamat'] ?? null,
             'blok'         => $row['blok'] ?? null,
             'no_rumah'     => $row['no_rumah'] ?? $row['no rumah'] ?? null,
             'rt'           => $row['rt'] ?? null,

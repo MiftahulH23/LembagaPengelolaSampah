@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Iuran;
 use App\Models\Jadwal;
 use App\Models\KartuKeluarga;
 use App\Models\LogPengambilan;
@@ -38,16 +39,44 @@ class DashboardController extends Controller
     /**
      * Mengambil dan memformat data untuk kartu statistik.
      */
+    // Jangan lupa tambahkan `use App\Models\Iuran;` di bagian atas file controller kamu.
+
     private function getStatistikData(?int $kelurahanId, int $tahunIni): array
     {
-        $totalKK = KartuKeluarga::when($kelurahanId, fn ($q) => $q->where('kelurahan_id', $kelurahanId))->count();
+        // --- Bagian ini tetap sama ---
+        $totalKK = KartuKeluarga::when($kelurahanId, fn($q) => $q->where('kelurahan_id', $kelurahanId))->count();
 
-        $iuranPerBulanStatis = 25000;
-        $potensiPemasukanTahunan = $totalKK * $iuranPerBulanStatis * 12;
+        // --- MULAI PERUBAHAN: Menghitung Potensi Pemasukan Tahunan secara Dinamis ---
+        $potensiPemasukanTahunan = 0;
+        if ($totalKK > 0) {
+            $totalNominalSatuTahun = 0;
 
+            // Looping untuk setiap bulan dari Januari (1) hingga Desember (12)
+            for ($bulan = 1; $bulan <= 12; $bulan++) {
+                // Tentukan tanggal referensi (akhir bulan) untuk pencarian iuran
+                $tanggalAkhirBulan = Carbon::create($tahunIni, $bulan, 1)->endOfMonth();
+
+                // Cari iuran terbaru yang berlaku pada bulan tersebut untuk kelurahan ini
+                $iuranBerlaku = Iuran::when($kelurahanId, fn($q) => $q->where('kelurahan_id', $kelurahanId))
+                    ->where('created_at', '<=', $tanggalAkhirBulan) // Kunci: iuran yang dibuat sebelum/pada akhir bulan
+                    ->orderBy('created_at', 'desc') // Ambil yang paling baru
+                    ->first();
+
+                // Jika ada iuran yang ditemukan, tambahkan nominalnya
+                if ($iuranBerlaku) {
+                    $totalNominalSatuTahun += $iuranBerlaku->nominal_iuran;
+                }
+            }
+
+            // Kalkulasi total potensi pemasukan
+            $potensiPemasukanTahunan = $totalKK * $totalNominalSatuTahun;
+        }
+        // --- SELESAI PERUBAHAN ---
+
+        // --- Bagian di bawah ini tetap sama ---
         $pemasukanTahunIni = Pembayaran::when(
             $kelurahanId,
-            fn ($q) => $q->whereHas('kartuKeluarga', fn ($k) => $k->where('kelurahan_id', $kelurahanId))
+            fn($q) => $q->whereHas('kartuKeluarga', fn($k) => $k->where('kelurahan_id', $kelurahanId))
         )
             ->where('tahun', $tahunIni)
             ->sum('jumlah');
@@ -55,14 +84,14 @@ class DashboardController extends Controller
         $tanggalHariIni = Carbon::today();
         $namaHariIni = $tanggalHariIni->locale('id')->translatedFormat('l');
 
-        $totalZonaHariIni = Jadwal::when($kelurahanId, fn ($q) => $q->where('kelurahan_id', $kelurahanId))
+        $totalZonaHariIni = Jadwal::when($kelurahanId, fn($q) => $q->where('kelurahan_id', $kelurahanId))
             ->where('hari', $namaHariIni)
             ->count();
 
-        $zonaSudahDiambilHariIni = LogPengambilan::when($kelurahanId, fn ($q) => $q->where('kelurahan_id', $kelurahanId))
+        $zonaSudahDiambilHariIni = LogPengambilan::when($kelurahanId, fn($q) => $q->where('kelurahan_id', $kelurahanId))
             ->where('tanggal_ambil', $tanggalHariIni->toDateString())
             ->count();
-        
+
         $persentaseSudahDiambil = $totalZonaHariIni > 0 ? ($zonaSudahDiambilHariIni / $totalZonaHariIni) * 100 : 0;
 
         return [
@@ -80,14 +109,14 @@ class DashboardController extends Controller
     {
         $iuranPerBulan = Pembayaran::when(
             $kelurahanId,
-            fn ($q) => $q->whereHas('kartuKeluarga', fn ($k) => $k->where('kelurahan_id', $kelurahanId))
+            fn($q) => $q->whereHas('kartuKeluarga', fn($k) => $k->where('kelurahan_id', $kelurahanId))
         )
             ->where('tahun', $tahunIni)
             ->select(DB::raw('bulan as bulan'), DB::raw('SUM(jumlah) as total'))
             ->groupBy('bulan')
             ->orderBy('bulan', 'asc')
             ->get()
-            ->mapWithKeys(fn ($item) => [$item->bulan => $item->total]);
+            ->mapWithKeys(fn($item) => [$item->bulan => $item->total]);
 
         $maxIuran = $iuranPerBulan->max();
         $dataMaxIuran = $maxIuran > 0 ? (ceil($maxIuran / 20000) * 20000) : 80000;
@@ -99,7 +128,7 @@ class DashboardController extends Controller
                 'pendapatan' => $iuranPerBulan->get($i, 0),
             ];
         }
-        
+
         return [
             'data' => $grafikData,
             'max_iuran' => $dataMaxIuran,
@@ -112,15 +141,15 @@ class DashboardController extends Controller
     private function getGrafikPengambilanData(?int $kelurahanId): array
     {
         $startOfWeek = Carbon::now()->startOfWeek();
-        
-        $jadwalSeminggu = Jadwal::when($kelurahanId, fn ($q) => $q->where('kelurahan_id', $kelurahanId))
+
+        $jadwalSeminggu = Jadwal::when($kelurahanId, fn($q) => $q->where('kelurahan_id', $kelurahanId))
             ->whereIn('hari', ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'])
             ->select('hari', DB::raw('COUNT(zona) as total_zona'))
             ->groupBy('hari')
             ->get()
             ->keyBy('hari');
 
-        $logSeminggu = LogPengambilan::when($kelurahanId, fn ($q) => $q->where('kelurahan_id', $kelurahanId))
+        $logSeminggu = LogPengambilan::when($kelurahanId, fn($q) => $q->where('kelurahan_id', $kelurahanId))
             ->whereBetween('tanggal_ambil', [$startOfWeek, Carbon::now()->endOfWeek()])
             ->select(DB::raw('DATE(tanggal_ambil) as tanggal'), DB::raw('COUNT(DISTINCT zona) as total_diambil'))
             ->groupBy('tanggal')
@@ -131,7 +160,7 @@ class DashboardController extends Controller
         for ($i = 0; $i < 7; $i++) {
             $tanggal = $startOfWeek->copy()->addDays($i);
             $namaHari = $tanggal->locale('id')->translatedFormat('l');
-            
+
             $totalDijadwalkan = $jadwalSeminggu->get($namaHari)['total_zona'] ?? 0;
             $sudahDiambil = $logSeminggu->get($tanggal->toDateString())['total_diambil'] ?? 0;
 
@@ -141,7 +170,7 @@ class DashboardController extends Controller
                 'diambil' => $sudahDiambil,
             ];
         }
-        
+
         return $grafikData;
     }
 }

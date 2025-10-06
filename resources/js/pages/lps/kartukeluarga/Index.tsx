@@ -137,11 +137,7 @@ const FormModalContent = ({ isEdit = false, data, setData, errors, kecamatan, ke
                 </div>
             </div>
 
-            <div>
-                <Label htmlFor={isEdit ? 'edit_alamat' : 'alamat'}>Alamat</Label>
-                <Input id={isEdit ? 'edit_alamat' : 'alamat'} value={data.alamat} onChange={(e) => setData('alamat', e.target.value)} />
-                {errors.alamat && <p className="text-sm text-red-500">{errors.alamat}</p>}
-            </div>
+           
 
             {/* --- PERUBAHAN DI SINI --- */}
             <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
@@ -194,7 +190,6 @@ const Index = (props: { kartukeluarga: KartuKeluarga.Default[]; kecamatan: Kecam
     const { data, setData, post, processing, errors, reset } = useForm({
         nama: '',
         no_hp: '',
-        alamat: '',
         blok: '',
         no_rumah: '',
         rt: '',
@@ -215,7 +210,6 @@ const Index = (props: { kartukeluarga: KartuKeluarga.Default[]; kecamatan: Kecam
     } = useForm({
         nama: '',
         no_hp: '',
-        alamat: '',
         blok: '',
         no_rumah: '',
         rt: '',
@@ -256,7 +250,6 @@ const Index = (props: { kartukeluarga: KartuKeluarga.Default[]; kecamatan: Kecam
         { accessorKey: 'nama', header: 'Nama' },
         { accessorKey: 'no_hp', header: 'No. HP' },
         { id: 'zona_id', accessorKey: 'zona.nama_zona', header: 'Zona', filterFn: 'checkbox' as FilterFnOption<KartuKeluarga.Default> },
-        { accessorKey: 'alamat', header: 'Alamat' },
         { accessorKey: 'blok', header: 'Blok' },
         { accessorKey: 'no_rumah', header: 'No. Rumah' },
         { accessorKey: 'rt', header: 'RT' },
@@ -297,7 +290,6 @@ const Index = (props: { kartukeluarga: KartuKeluarga.Default[]; kecamatan: Kecam
         setEditData({
             nama: kk.nama || '',
             no_hp: kk.no_hp || '',
-            alamat: kk.alamat || '',
             blok: kk.blok || '',
             no_rumah: kk.no_rumah || '',
             rt: kk.rt || '',
@@ -355,7 +347,6 @@ const Index = (props: { kartukeluarga: KartuKeluarga.Default[]; kecamatan: Kecam
                                         onClick={() => {
                                             data.nama = '';
                                             data.no_hp = '';
-                                            data.alamat = '';
                                             data.blok = '';
                                             data.no_rumah = '';
                                             data.rt = '';

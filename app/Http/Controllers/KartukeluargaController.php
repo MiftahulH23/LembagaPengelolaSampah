@@ -49,7 +49,6 @@ class KartukeluargaController extends Controller
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
             'no_hp' => 'nullable|string|max:255',
-            'alamat' => 'nullable|string|max:255',
             'blok' => 'nullable|string|max:255',
             'rt' => 'nullable|string|max:255',
             'rw' => 'nullable|string|max:255',
@@ -72,7 +71,6 @@ class KartukeluargaController extends Controller
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
             'no_hp' => 'nullable|string|max:255',
-            'alamat' => 'nullable|string|max:255',
             'blok' => 'nullable|string|max:255',
             'rt' => 'nullable|string|max:255',
             'rw' => 'nullable|string|max:255',

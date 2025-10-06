@@ -7,7 +7,6 @@ export namespace KartuKeluarga {
         // Kolom disesuaikan dengan skema database
         nama: string;
         no_hp: string | null;
-        alamat: string | null;
         blok: string | null;
         rt: string | null;
         rw: string | null;

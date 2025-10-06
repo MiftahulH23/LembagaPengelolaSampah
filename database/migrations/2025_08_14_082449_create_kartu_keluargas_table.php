@@ -20,7 +20,6 @@ return new class extends Migration
             // Kolom disesuaikan dengan format Excel
             $table->string('nama');
             $table->string('no_hp')->nullable();
-            $table->string('alamat')->nullable();
             $table->string('blok')->nullable();
             $table->string('rt')->nullable();
             $table->string('rw')->nullable();
