@@ -107,7 +107,7 @@ function DialogTambahPembayaran({
             preserveScroll: false,
             onSuccess: () => {
                 setIsPaymentModalOpen(false);
-                // Toast success ditangani oleh flash message backend, tidak perlu toast di sini.
+                toast.success('Pembayaran berhasil disimpan.');
             },
             onError: (formErrors: any) => {
                 toast.error(formErrors.bulan || formErrors.jumlah || 'Gagal menyimpan pembayaran.');

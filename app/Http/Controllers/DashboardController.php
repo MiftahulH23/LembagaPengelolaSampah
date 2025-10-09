@@ -71,9 +71,7 @@ class DashboardController extends Controller
             // Kalkulasi total potensi pemasukan
             $potensiPemasukanTahunan = $totalKK * $totalNominalSatuTahun;
         }
-        // --- SELESAI PERUBAHAN ---
-
-        // --- Bagian di bawah ini tetap sama ---
+       
         $pemasukanTahunIni = Pembayaran::when(
             $kelurahanId,
             fn($q) => $q->whereHas('kartuKeluarga', fn($k) => $k->where('kelurahan_id', $kelurahanId))

@@ -78,7 +78,6 @@ const ImportModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpe
 const FormModalContent = ({ isEdit = false, data, setData, errors, kecamatan, kelurahan, zonas, filteredKelurahan }: any) => {
     return (
         <div className="space-y-4">
-            {/* --- PERUBAHAN DI SINI --- */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                     <Label htmlFor={isEdit ? 'edit_nama' : 'nama'}>Nama</Label>
@@ -137,9 +136,6 @@ const FormModalContent = ({ isEdit = false, data, setData, errors, kecamatan, ke
                 </div>
             </div>
 
-           
-
-            {/* --- PERUBAHAN DI SINI --- */}
             <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
                 <div>
                     <Label htmlFor={isEdit ? 'edit_blok' : 'blok'}>Blok</Label>
@@ -186,7 +182,6 @@ const FormModalContent = ({ isEdit = false, data, setData, errors, kecamatan, ke
 const Index = (props: { kartukeluarga: KartuKeluarga.Default[]; kecamatan: Kecamatan[]; kelurahan: Kelurahan[]; zonas: Zona[] }) => {
     const { kartukeluarga, kecamatan, kelurahan, zonas } = props;
 
-    // --- PERUBAHAN DI SINI: Tambahkan rt dan rw ---
     const { data, setData, post, processing, errors, reset } = useForm({
         nama: '',
         no_hp: '',
@@ -199,7 +194,6 @@ const Index = (props: { kartukeluarga: KartuKeluarga.Default[]; kecamatan: Kecam
         kecamatan_id: '',
     });
 
-    // --- PERUBAHAN DI SINI: Tambahkan rt dan rw ---
     const {
         data: editData,
         setData: setEditData,
@@ -286,7 +280,6 @@ const Index = (props: { kartukeluarga: KartuKeluarga.Default[]; kecamatan: Kecam
 
     const openEditModal = (kk: KartuKeluarga.Default) => {
         setSelectedKartuKeluarga(kk);
-        // --- PERUBAHAN DI SINI: Tambahkan rt dan rw ---
         setEditData({
             nama: kk.nama || '',
             no_hp: kk.no_hp || '',

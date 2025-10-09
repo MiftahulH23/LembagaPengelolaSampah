@@ -53,11 +53,9 @@ const PengambilanSampahIndex: React.FC<PageProps> = ({ checklistData: initialChe
 
         const requestOptions = {
             preserveScroll: true,
-            // onSuccess dan onError tidak perlu lagi karena redirect dari backend
-            // akan menangani refresh data dan notifikasi flash message
             onError: () => {
                 toast.error('Gagal memperbarui status. Memulihkan data.');
-                setChecklist(initialChecklist); // Kembalikan ke state awal jika gagal
+                setChecklist(initialChecklist); 
             },
         };
 

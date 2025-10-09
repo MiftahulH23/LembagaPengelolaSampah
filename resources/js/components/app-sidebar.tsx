@@ -107,7 +107,6 @@ export function AppSidebar({ ...props }) {
         superadmin: adminNavItems,
         lps: lpsNavItems,
     };
-    console.log('User Role:', role);
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
