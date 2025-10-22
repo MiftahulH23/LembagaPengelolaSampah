@@ -17,57 +17,45 @@ import { Check, HandCoins, X } from 'lucide-react';
 import { DataTableFilter } from '@/components/data-table/data-table-filter';
 
 // --- Tipe Data ---
-interface Pembayaran {
-    id: number;
-    tahun: string;
-    bulan: number;
-}
-interface Zona {
-    id: number;
-    nama_zona: string;
-}
-interface KartuKeluarga {
-    id: number;
-    nama: string;
-    alamat: string;
-    rt: string;
-    rw: string;
-    zona:  Zona | null;
-    pembayaran: Pembayaran[];
-}
-// REVISI: Tipe baru untuk prop iuran
+// Asumsi kamu import dari file types global
+import { KartuKeluarga } from '@/types/data/kartukeluarga';
+import { Zona } from '@/types/data/zona';
+// Tipe Iuran ini (Iuran & IuranPageProps) harusnya ada di file ini atau diimport
 interface Iuran {
     id: number;
     nominal_iuran: number;
+    tanggal_mulai_berlaku: string;
+    tanggal_akhir_berlaku: string;
 }
 interface IuranPageProps {
-    kartuKeluarga: KartuKeluarga[];
+    kartuKeluarga: KartuKeluarga.Default[]; // Menggunakan tipe global
     selectedYear: number;
     iuranTerbaru: Iuran | null;
-    zonas: Zona[];
+    zonas: Zona.Default[]; // Menggunakan tipe global
+    semuaPeriodeIuran: Iuran[] | null;
 }
 
+// --- Komponen Modal Pembayaran ---
 function DialogTambahPembayaran({
     months,
     selectedYear,
     selectedKK,
     isPaymentModalOpen,
     setIsPaymentModalOpen,
-    nominalIuran, // REVISI: Terima prop nominalIuran
+    semuaPeriodeIuran,
 }: {
     months: string[];
     selectedYear: number;
-    selectedKK: KartuKeluarga | null;
+    selectedKK: KartuKeluarga.Default | null; // Tipe global
     isPaymentModalOpen: boolean;
     setIsPaymentModalOpen: (open: boolean) => void;
-    nominalIuran: number; // REVISI: Tipe prop
+    semuaPeriodeIuran: Iuran[] | null;
 }) {
-    const getPaidMonths = (kk: KartuKeluarga | null): number[] => {
+    const getPaidMonths = (kk: KartuKeluarga.Default | null): number[] => {
         if (!kk || !kk.pembayaran) return [];
         return kk.pembayaran.map((item) => item.bulan);
     };
 
-    // REVISI: Hapus `jumlah` dari form, karena tidak lagi dikirim
     const { data, setData, post, processing, errors, reset } = useForm({
         bulan: [] as number[],
         tahun: selectedYear,
@@ -75,23 +63,54 @@ function DialogTambahPembayaran({
         catatan: '',
     });
 
+    const [totalBayar, setTotalBayar] = useState(0);
+
     useEffect(() => {
         if (isPaymentModalOpen && selectedKK) {
             reset();
-            // REVISI: Tidak perlu set `jumlah` lagi
             setData({
                 bulan: [],
                 tahun: selectedYear,
                 tanggal: new Date().toISOString().split('T')[0],
                 catatan: '',
             });
+            setTotalBayar(0);
         }
     }, [isPaymentModalOpen, selectedKK, selectedYear]);
+
+    useEffect(() => {
+        if (!semuaPeriodeIuran || data.bulan.length === 0) {
+            setTotalBayar(0);
+            return;
+        }
+
+        let newTotal = 0;
+        const paidMonths = getPaidMonths(selectedKK);
+        const newMonthsToPay = data.bulan.filter((month) => !paidMonths.includes(month));
+
+        for (const month of newMonthsToPay) {
+            const targetDate = new Date(data.tahun, month - 1, 1);
+            const iuranForMonth = semuaPeriodeIuran.find((iuran) => {
+                const [sy, sm, sd] = iuran.tanggal_mulai_berlaku.split('-').map(Number);
+                const [ey, em, ed] = iuran.tanggal_akhir_berlaku.split('-').map(Number);
+                const startDate = new Date(sy, sm - 1, sd);
+                const endDate = new Date(ey, em - 1, ed);
+                return targetDate >= startDate && targetDate <= endDate;
+            });
+
+            if (iuranForMonth) {
+                newTotal += Number(iuranForMonth.nominal_iuran);
+            }
+        }
+        setTotalBayar(newTotal);
+    }, [data.bulan, data.tahun, semuaPeriodeIuran, selectedKK]);
 
     const handlePaymentSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!selectedKK) return;
 
+        // Simpan checkbox asli pilihan user
+        const originalBulanSelection = data.bulan;
         const paidMonths = getPaidMonths(selectedKK);
         const newMonthsToPay = data.bulan.filter((month) => !paidMonths.includes(month));
 
@@ -100,30 +119,42 @@ function DialogTambahPembayaran({
             return;
         }
 
-        const originalBulanSelection = data.bulan;
+        // --- PERBAIKAN ERROR 1 ---
+        // 1. Set state hook 'data.bulan' HANYA ke bulan yang akan dibayar
         setData('bulan', newMonthsToPay);
 
+        // 2. Panggil 'post' TANPA wrapper 'data:'
         post(route('pembayaran.store', selectedKK.id), {
             preserveScroll: false,
+            preserveState: false, // false agar me-refresh data tabel setelah sukses
             onSuccess: () => {
                 setIsPaymentModalOpen(false);
-                toast.success('Pembayaran berhasil disimpan.');
+                // Biarkan state 'data.bulan' ter-reset otomatis saat modal dibuka lagi
             },
             onError: (formErrors: any) => {
-                toast.error(formErrors.bulan || formErrors.jumlah || 'Gagal menyimpan pembayaran.');
+                if (formErrors.tanggal) {
+                    toast.error(formErrors.tanggal);
+                } else if (formErrors.bulan) {
+                    toast.error(formErrors.bulan);
+                } else {
+                    toast.error('Gagal menyimpan pembayaran. Periksa kembali data.');
+                }
+                // 3. Kembalikan state 'data.bulan' ke pilihan checkbox asli user jika error
                 setData('bulan', originalBulanSelection);
             },
         });
+        // --- AKHIR PERBAIKAN ERROR 1 ---
     };
 
     const paidMonths = getPaidMonths(selectedKK);
+    const newMonthsCount = data.bulan.filter((m) => !paidMonths.includes(m)).length;
 
     return (
         <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
                 <DialogTitle>Input Pembayaran</DialogTitle>
                 <DialogDescription>
-                    Untuk: <strong>{selectedKK?.nama}</strong> <br />
+                    Untuk: <strong>{selectedKK?.nama ?? 'Warga tidak ditemukan'}</strong> <br />
                     Tahun Iuran: <strong>{selectedYear}</strong>
                 </DialogDescription>
             </DialogHeader>
@@ -138,7 +169,7 @@ function DialogTambahPembayaran({
                                 <div key={monthNumber} className="flex items-center space-x-2">
                                     <Checkbox
                                         id={`bulan-${monthNumber}`}
-                                        checked={data.bulan.includes(monthNumber)}
+                                        checked={isAlreadyPaid || data.bulan.includes(monthNumber)}
                                         disabled={isAlreadyPaid}
                                         onCheckedChange={(checked) => {
                                             setData('bulan', checked ? [...data.bulan, monthNumber] : data.bulan.filter((m) => m !== monthNumber));
@@ -166,20 +197,27 @@ function DialogTambahPembayaran({
                 </div>
 
                 <div>
-                    <Label htmlFor="jumlah">Jumlah Iuran Per Bulan</Label>
-                    <Input id="jumlah" type="number" value={nominalIuran} disabled />
-                    <p className="mt-1 text-xs text-muted-foreground">Nominal iuran diambil dari data terbaru.</p>
-                </div>
-
-                <div>
                     <Label htmlFor="catatan">Catatan (Opsional)</Label>
                     <Textarea id="catatan" value={data.catatan} onChange={(e) => setData('catatan', e.target.value)} />
                     {errors.catatan && <p className="mt-1 text-sm text-red-500">{errors.catatan}</p>}
                 </div>
 
+                 <div>
+                    <Label>Total Pembayaran (Otomatis)</Label>
+                    <div className="text-2xl font-bold text-primary">
+                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalBayar)}
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        Total dihitung otomatis berdasarkan nominal iuran yang berlaku untuk setiap bulan yang dipilih.
+                    </p>
+                    {totalBayar === 0 && newMonthsCount > 0 && !errors.bulan && (
+                        <p className="mt-1 text-sm text-yellow-600">Pastikan periode iuran telah diatur untuk bulan yang dipilih.</p>
+                    )}
+                </div>
+
                 <div className="mt-4 flex justify-end">
-                    <Button type="submit" disabled={processing || data.bulan.filter((m) => !paidMonths.includes(m)).length === 0}>
-                        {processing ? 'Menyimpan...' : `Simpan ${data.bulan.filter((m) => !paidMonths.includes(m)).length} Bulan`}
+                    <Button type="submit" disabled={processing || newMonthsCount === 0}>
+                        {processing ? 'Menyimpan...' : `Simpan ${newMonthsCount} Bulan`}
                     </Button>
                 </div>
             </form>
@@ -187,29 +225,27 @@ function DialogTambahPembayaran({
     );
 }
 
-const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iuranTerbaru, zonas }) => {
+// --- Komponen Utama Halaman ---
+const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iuranTerbaru, zonas, semuaPeriodeIuran }) => {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-    const [selectedKK, setSelectedKK] = useState<KartuKeluarga | null>(null);
-    // REVISI: Ambil nominal iuran dari prop, dengan fallback 0
-    const nominalIuran = iuranTerbaru?.nominal_iuran ?? 0;
+    const [selectedKK, setSelectedKK] = useState<KartuKeluarga.Default | null>(null);
 
-    const openPaymentModal = (kk: KartuKeluarga) => {
-        // REVISI: Tambahkan pengecekan sebelum membuka modal
-        if (nominalIuran === 0 && !iuranTerbaru) {
-            toast.error('Nominal iuran untuk kelurahan ini belum diatur. Silahkan atur terlebih dahulu.');
+    const openPaymentModal = (kk: KartuKeluarga.Default) => {
+        if (!semuaPeriodeIuran || semuaPeriodeIuran.length === 0) {
+            toast.error('Belum ada data iuran yang diatur untuk kelurahan ini. Silakan atur di menu Iuran.');
             return;
         }
         setSelectedKK(kk);
         setIsPaymentModalOpen(true);
     };
 
-    const getPaymentStatus = (kk: KartuKeluarga, month: number): boolean => {
+    const getPaymentStatus = (kk: KartuKeluarga.Default, month: number): boolean => {
         return kk.pembayaran.some((p) => p.bulan === month);
     };
 
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
-    const columns: ColumnDef<KartuKeluarga>[] = [
+    const columns: ColumnDef<KartuKeluarga.Default>[] = [
         {
             id: 'id',
             accessorKey: 'zona.nama_zona',
@@ -218,26 +254,33 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
                 <div className="flex flex-col">
                     <span className="font-medium">{row.original.nama}</span>
                     <span className="text-xs text-muted-foreground">
-                        {row.original.zona?.nama_zona}, {row.original.alamat}, RT {row.original.rt}/RW {row.original.rw}, 
+                        {row.original.zona?.nama_zona}, RT {row.original.rt}/RW {row.original.rw}, 
                     </span>
                 </div>
             ),
-            filterFn: 'checkbox' as FilterFnOption<KartuKeluarga>,
+            filterFn: 'checkbox' as FilterFnOption<KartuKeluarga.Default>,
         },
         ...months.map(
             (monthName, index) =>
                 ({
-                    id: monthName,
+                    id: monthName.toLowerCase(),
                     header: monthName,
+                    size: 60,
                     cell: ({ row }) => {
                         const isPaid = getPaymentStatus(row.original, index + 1);
-                        return isPaid ? <Check className="mx-auto h-5 w-5 text-green-500" /> : <X className="mx-auto h-5 w-5 text-red-500" />;
+                        return isPaid ? (
+                            <Check className="mx-auto h-5 w-5 text-green-500" />
+                        ) : (
+                            <X className="mx-auto h-5 w-5 text-red-500" />
+                        );
                     },
-                }) as ColumnDef<KartuKeluarga>,
+                    enableSorting: false,
+                }) as ColumnDef<KartuKeluarga.Default>,
         ),
         {
             id: 'aksi',
             header: 'Aksi',
+            size: 100,
             cell: ({ row }) => (
                 <Button variant="outline" size="sm" onClick={() => openPaymentModal(row.original)}>
                     <HandCoins className="mr-2 h-4 w-4" /> Bayar
@@ -247,17 +290,20 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
     ];
 
     const handleYearChange = (year: number) => {
-        router.get(route('pembayaran.index'), { year }, { preserveScroll: true });
+        router.get(route('pembayaran.index'), { year }, { preserveScroll: true, preserveState: false });
     };
 
-    const breadcrumb = [{ title: 'Data Iuran', href: '/pembayaran' }];
+    const breadcrumb = [{ title: 'Pembayaran Iuran', href: '/pembayaran' }];
     const dataZona = zonas.map((zona) => zona.nama_zona);
 
     return (
         <AppLayout breadcrumbs={breadcrumb}>
-            <Head title="Data Iuran" />
+            <Head title="Pembayaran Iuran" />
             <div className="container">
-                <h1>Data Iuran</h1>
+                <h1>Pembayaran Iuran Warga</h1>
+                <p className="text-muted-foreground mb-4">
+                    Rekapitulasi status pembayaran iuran warga per bulan untuk tahun {selectedYear}.
+                </p>
                 <DataTable columns={columns} data={kartuKeluarga}>
                     {({ table }) => (
                         <DataTableControls
@@ -270,7 +316,7 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {[2025, 2024, 2023].map((year) => (
+                                            {[2026, 2025, 2024, 2023].map((year) => (
                                                 <SelectItem key={year} value={String(year)}>
                                                     {year}
                                                 </SelectItem>
@@ -294,7 +340,7 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
                     selectedKK={selectedKK}
                     isPaymentModalOpen={isPaymentModalOpen}
                     setIsPaymentModalOpen={setIsPaymentModalOpen}
-                    nominalIuran={nominalIuran}
+                    semuaPeriodeIuran={semuaPeriodeIuran}
                 />
             </Dialog>
         </AppLayout>

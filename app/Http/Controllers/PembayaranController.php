@@ -8,14 +8,12 @@ use App\Models\Pembayaran;
 use App\Models\Zona;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\DB; // <-- IMPORT DB
 use Inertia\Inertia;
+use Carbon\Carbon; // Import Carbon
 
 class PembayaranController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $selectedYear = $request->input('year', date('Y'));
@@ -25,56 +23,42 @@ class PembayaranController extends Controller
             'kelurahan',
             'kecamatan',
             'zona',
+            // Load pembayaran hanya untuk tahun terpilih
             'pembayaran' => fn($q) => $q->where('tahun', $selectedYear)
         ])
             ->where('kelurahan_id', $kelurahanId)
             ->orderBy('nama')->get();
 
-        // REVISI: Ambil data iuran terbaru untuk kelurahan yang login
-        $iuranTerbaru = Iuran::where('kelurahan_id', $kelurahanId)
-            ->orderBy('created_at', 'desc')
-            ->first();
+        // REVISI: Ambil SEMUA data iuran yang relevan
+        $iuranPeriods = Iuran::where('kelurahan_id', $kelurahanId)
+            ->orderBy('tanggal_mulai_berlaku', 'desc')
+            ->get();
 
-        $zonas = Zona::all();
+        $zonas = Zona::where('kelurahan_id', $kelurahanId)->get(); // Hanya zona di kelurahan user
 
         return Inertia::render('lps/pembayaran/Index', [
             'kartuKeluarga' => $kartuKeluarga,
             'selectedYear' => (int) $selectedYear,
-            'iuranTerbaru' => $iuranTerbaru, // Kirim iuran terbaru sebagai prop
+            'iuranTerbaru' => $iuranPeriods->first(), // Tetap kirim untuk fallback (walau frontend baru tak pakai)
+            'semuaPeriodeIuran' => $iuranPeriods, // <-- REVISI: Kirim semua periode ke frontend
             'zonas' => $zonas,
         ]);
     }
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request, KartuKeluarga $kartuKeluarga)
     {
-        $request->validate([
+        $validated = $request->validate([
             'bulan' => 'required|array|min:1',
             'bulan.*' => 'required|integer|between:1,12',
             'tahun' => 'required|integer',
-            'tanggal' => 'required|date',
+            'tanggal' => 'required|date', // Ini adalah tanggal pencatatan pembayaran
             'catatan' => 'nullable|string|max:255',
         ]);
 
-        // REVISI: Ambil iuran terbaru dari database, bukan dari request
-        $iuran = Iuran::where('kelurahan_id', $kartuKeluarga->kelurahan_id)
-            ->orderBy('created_at', 'desc')
-            ->firstOrFail();
-
-            // dd($iuran->toArray()); // Gagal jika tidak ada iuran yang terdaftar untuk kelurahan tsb
-
+        // Cek dulu bulan yang sudah dibayar (Logika ini tetap penting)
         $bulanSudahDibayar = Pembayaran::where('kartu_keluarga_id', $kartuKeluarga->id)
-            ->where('tahun', $request->tahun)
-            ->whereIn('bulan', $request->bulan)
+            ->where('tahun', $validated['tahun'])
+            ->whereIn('bulan', $validated['bulan'])
             ->pluck('bulan');
 
         if ($bulanSudahDibayar->isNotEmpty()) {
@@ -83,60 +67,60 @@ class PembayaranController extends Controller
 
         $dataToInsert = [];
         $now = now();
-        $diinputOleh = Auth::user()->username;
+        $diinputOleh = Auth::user()->username; // Nanti diganti user ID
 
-        foreach ($request->bulan as $bulan) {
-            $dataToInsert[] = [
-                'kartu_keluarga_id' => $kartuKeluarga->id,
-                'iuran_id' => $iuran->id, // Simpan ID iuran yang digunakan
-                'tahun' => $request->tahun,
-                'bulan' => $bulan,
-                'jumlah' => $iuran->nominal_iuran, // Gunakan nominal dari iuran
-                'tanggal' => $request->tanggal,
-                'catatan' => $request->catatan,
-                'diinput_oleh' => $diinputOleh,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
+        // --- REVISI UTAMA: Gunakan Transaksi dan Cek Iuran Per Bulan ---
+        try {
+            DB::beginTransaction();
+
+            foreach ($validated['bulan'] as $bulan) {
+                // Buat tanggal representatif untuk bulan yang dibayar (misal: 1 Januari 2025)
+                $tanggalBulanBerlaku = Carbon::create($validated['tahun'], $bulan, 1)->startOfDay();
+
+                // Cari iuran yang berlaku untuk bulan tersebut
+                $iuranBerlaku = Iuran::where('kelurahan_id', $kartuKeluarga->kelurahan_id)
+                    ->where('tanggal_mulai_berlaku', '<=', $tanggalBulanBerlaku)
+                    ->where('tanggal_akhir_berlaku', '>=', $tanggalBulanBerlaku)
+                    ->first(); // Ambil satu yang cocok
+
+                // Jika tidak ada iuran yang di-set untuk bulan itu, batalkan semua
+                if (!$iuranBerlaku) {
+                    DB::rollBack();
+                    // Kirim nama bulan (e.g., "Januari", "Februari")
+                    $namaBulan = $tanggalBulanBerlaku->locale('id')->monthName;
+                    return back()->withErrors(['bulan' => "Tidak ada tarif iuran yang berlaku untuk bulan {$namaBulan} {$validated['tahun']}. Silakan atur di menu Iuran."]);
+                }
+
+                // Kumpulkan data untuk insert
+                $dataToInsert[] = [
+                    'kartu_keluarga_id' => $kartuKeluarga->id,
+                    'iuran_id' => $iuranBerlaku->id, // Gunakan ID iuran yang ditemukan
+                    'tahun' => $validated['tahun'],
+                    'bulan' => $bulan,
+                    'jumlah' => $iuranBerlaku->nominal_iuran, // Gunakan nominal dari iuran yang ditemukan
+                    'tanggal' => $validated['tanggal'], // Tanggal bayar (pencatatan) dari form
+                    'catatan' => $validated['catatan'],
+                    'diinput_oleh' => $diinputOleh,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            // Insert semua data sekaligus jika loop berhasil
+            if (!empty($dataToInsert)) {
+                Pembayaran::insert($dataToInsert);
+            }
+
+            DB::commit(); // Semua sukses, simpan ke DB
+        } catch (\Exception $e) {
+            DB::rollBack(); // Ada error, batalkan
+            return back()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
         }
+        // --- Akhir Revisi ---
 
-        if (!empty($dataToInsert)) {
-            Pembayaran::insert($dataToInsert);
-        }
-
-        return redirect()->route('pembayaran.index', ['year' => $request->tahun])
+        return redirect()->route('pembayaran.index', ['year' => $validated['tahun']])
             ->with('success', 'Pembayaran berhasil disimpan.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
+    // method update, destroy, dll. (Belum ada di kodemu, tapi bisa ditambahkan di sini)
 }

@@ -1,3 +1,4 @@
+import { Pembayaran } from './pembayaran';
 import { Wilayah } from './wilayah';
 import { Zona } from './zona';
 
@@ -19,7 +20,7 @@ export namespace KartuKeluarga {
         kelurahan?: Wilayah.Kelurahan;
         kecamatan_id: number;
         kecamatan?: Wilayah.Kecamatan;
-        
+        pembayaran: Pembayaran.Default[];
         // Timestamps
         created_at: string;
         updated_at: string;
