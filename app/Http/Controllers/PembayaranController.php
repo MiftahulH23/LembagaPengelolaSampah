@@ -86,7 +86,6 @@ class PembayaranController extends Controller
                 // Jika tidak ada iuran yang di-set untuk bulan itu, batalkan semua
                 if (!$iuranBerlaku) {
                     DB::rollBack();
-                    // Kirim nama bulan (e.g., "Januari", "Februari")
                     $namaBulan = $tanggalBulanBerlaku->locale('id')->monthName;
                     return back()->withErrors(['bulan' => "Tidak ada tarif iuran yang berlaku untuk bulan {$namaBulan} {$validated['tahun']}. Silakan atur di menu Iuran."]);
                 }
@@ -94,13 +93,14 @@ class PembayaranController extends Controller
                 // Kumpulkan data untuk insert
                 $dataToInsert[] = [
                     'kartu_keluarga_id' => $kartuKeluarga->id,
-                    'iuran_id' => $iuranBerlaku->id, // Gunakan ID iuran yang ditemukan
+                    'iuran_id' => $iuranBerlaku->id, 
                     'tahun' => $validated['tahun'],
                     'bulan' => $bulan,
-                    'jumlah' => $iuranBerlaku->nominal_iuran, // Gunakan nominal dari iuran yang ditemukan
-                    'tanggal' => $validated['tanggal'], // Tanggal bayar (pencatatan) dari form
+                    'jumlah' => $iuranBerlaku->nominal_iuran, 
+                    'tanggal' => $validated['tanggal'], 
                     'catatan' => $validated['catatan'],
                     'diinput_oleh' => $diinputOleh,
+                    'status_validasi' => 'pending',
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];
@@ -116,11 +116,8 @@ class PembayaranController extends Controller
             DB::rollBack(); // Ada error, batalkan
             return back()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
         }
-        // --- Akhir Revisi ---
 
         return redirect()->route('pembayaran.index', ['year' => $validated['tahun']])
             ->with('success', 'Pembayaran berhasil disimpan.');
     }
-
-    // method update, destroy, dll. (Belum ada di kodemu, tapi bisa ditambahkan di sini)
 }

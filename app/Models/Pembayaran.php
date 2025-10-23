@@ -18,4 +18,20 @@ class Pembayaran extends Model
     public function iuran() {
         return $this->belongsTo(Iuran::class);
     }
+
+    protected $casts = [
+        'tanggal' => 'date',
+        'validated_at' => 'datetime', // <-- TAMBAHKAN
+    ];
+
+    public function diinputOlehUser()
+    {
+        // Gunakan 'username' sebagai foreign key
+        return $this->belongsTo(User::class, 'diinput_oleh', 'username'); 
+    }
+
+    public function validator()
+    {
+        return $this->belongsTo(User::class, 'validated_by');
+    }
 }

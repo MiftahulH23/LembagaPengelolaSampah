@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -23,6 +22,11 @@ return new class extends Migration
             $table->date('tanggal');
             $table->string('catatan')->nullable();
             $table->string('diinput_oleh');
+            $table->enum('status_validasi', ['pending', 'validated']);
+            $table->timestamp('validated_at')->nullable();
+            $table->foreignId('validated_by')->nullable()
+                ->constrained('users') 
+                ->onDelete('set null');
             $table->timestamps();
         });
     }

@@ -3,7 +3,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { SharedData, User, type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookA, BookOpen, CalendarClock, Coins, Folder, HandCoins, Landmark, Layers, LayoutGrid, Map, MapPinHouse, Recycle, UserRoundPlus } from 'lucide-react';
+import { BookA, BookOpen, CalendarClock, Coins, Folder, HandCoins, Landmark, LaptopMinimalCheck, Layers, LayoutGrid, Map, MapPinHouse, Recycle, UserRoundPlus } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -71,6 +71,11 @@ const lpsNavItems: NavItem[] = [
         title: 'Pembayaran Iuran',
         href: '/pembayaran',
         icon: HandCoins,
+    },
+    {
+        title: 'Validasi Pembayaran',
+        href: '/validasi-pembayaran',
+        icon: LaptopMinimalCheck
     },
     {
         title: 'Jadwal Pengambilan',
