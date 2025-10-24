@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Kecamatan;
 use App\Models\Kelurahan;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Events\Registered; // Pastikan ini ada jika event dipakai
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,8 +21,40 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        $user = User::with('kelurahan')->get();
-        $kelurahan = Kelurahan::select('id', 'nama_kelurahan')->get();
+        $loggedInUser = Auth::user();
+        $userQuery = User::with('kelurahan');
+        $kelurahanQuery = Kelurahan::select('id', 'nama_kelurahan');
+
+        // --- GUNAKAN if / elseif / else ---
+        if ($loggedInUser) {
+            $role = $loggedInUser->role;
+
+            if ($role === 'superadmin') {
+                // Superadmin: filter user
+                $userQuery->whereIn('role', ['superadmin', 'adminLPS']);
+                // Superadmin: tidak filter kelurahan
+            } elseif ($role === 'adminLPS') {
+                // AdminLPS: filter user
+                $userQuery->whereIn('role', ['petugasSampah', 'petugasIuran'])
+                          ->where('kelurahan_id', $loggedInUser->kelurahan_id);
+                // AdminLPS: filter kelurahan
+                $kelurahanQuery->where('id', $loggedInUser->kelurahan_id);
+            } else {
+                // Role lain (petugas, dll.): tidak bisa lihat user
+                $userQuery->whereRaw('1 = 0');
+                // Role lain: tidak bisa pilih kelurahan (query akan kosong)
+                $kelurahanQuery->whereRaw('1 = 0');
+            }
+        } else {
+             // Tidak login: tidak bisa lihat user & kelurahan
+             $userQuery->whereRaw('1 = 0');
+             $kelurahanQuery->whereRaw('1 = 0');
+        }
+        // --- AKHIR PENGGUNAAN if / elseif / else ---
+
+        $user = $userQuery->get();
+        $kelurahan = $kelurahanQuery->get();
+
         return Inertia::render('auth/register', [
             'user' => $user,
             'kelurahan' => $kelurahan
@@ -32,28 +63,38 @@ class RegisteredUserController extends Controller
 
     /**
      * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
+     * (Method store tidak perlu diubah)
      */
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'username' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username', // <-- Tambahkan unique check untuk username
             'nohp' => 'required|string|max:255|unique:users,nohp',
             'role' => 'required|string|max:255',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'kelurahan_id' => 'nullable|exists:kelurahan,id',
+            'kelurahan_id' => 'required|exists:kelurahan,id', // <-- Ubah ke required jika adminLPS/petugas wajib punya kelurahan
         ], [
             'username.required' => 'Username wajib diisi',
-            'username.string' => 'Username harus berupa teks',
-            'username.max' => 'Username tidak boleh lebih dari 255 karakter',
-            'nohp.required' => 'No HP wajib diisi',
-            'nohp.unique' => 'No HP sudah terdaftar',
-            'role.required' => 'Role wajib diisi',
-            'password.required' => 'Password wajib diisi',
-            'password.min' => 'Password harus memiliki minimal 8 karakter',
-            'password.confirmed' => 'Konfirmasi password tidak cocok',
+            'username.unique' => 'Username sudah terdaftar', // <-- Tambahkan pesan unique
+            // ... pesan error lain ...
+            'kelurahan_id.required' => 'Kelurahan wajib dipilih', // <-- Tambahkan pesan required
         ]);
+
+        // Pastikan hanya role yang diizinkan yang bisa dibuat (optional tapi bagus)
+        $allowedRolesToCreate = [];
+        $loggedInUser = Auth::user();
+        if ($loggedInUser) {
+            if ($loggedInUser->role === 'superadmin') {
+                $allowedRolesToCreate = ['adminLPS', 'superadmin'];
+            } elseif ($loggedInUser->role === 'adminLPS') {
+                $allowedRolesToCreate = ['petugasSampah', 'petugasIuran'];
+            }
+        }
+        // Jika role yang dikirim tidak ada di list yg diizinkan, gagalkan (misalnya)
+        if (!in_array($request->role, $allowedRolesToCreate)) {
+             return back()->withErrors(['role' => 'Anda tidak diizinkan membuat akun dengan role ini.']);
+        }
+
 
         $user = User::create([
             'username' => $request->username,
@@ -65,7 +106,6 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-
-        return back()->with('success', 'User registered successfully.');
+        return back()->with('success', 'Akun berhasil ditambahkan.'); // <-- Pesan success lebih konsisten
     }
 }

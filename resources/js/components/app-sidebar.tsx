@@ -24,7 +24,7 @@ const mainNavItems: NavItem[] = [
     },
 ];
 
-const adminNavItems: NavItem[] = [
+const superadminNav: NavItem[] = [
     {
         title: 'Dashboard',
         href: '/dashboard',
@@ -46,7 +46,7 @@ const adminNavItems: NavItem[] = [
         icon: UserRoundPlus,
     },
 ];
-const lpsNavItems: NavItem[] = [
+const adminLpsNav: NavItem[] = [
     {
         title: 'Dashboard',
         href: '/dashboard',
@@ -68,11 +68,6 @@ const lpsNavItems: NavItem[] = [
         icon: Coins,
     },
     {
-        title: 'Pembayaran Iuran',
-        href: '/pembayaran',
-        icon: HandCoins,
-    },
-    {
         title: 'Validasi Pembayaran',
         href: '/validasi-pembayaran',
         icon: LaptopMinimalCheck
@@ -83,25 +78,37 @@ const lpsNavItems: NavItem[] = [
         icon: CalendarClock,
     },
     {
+        title: 'Manajemen Akun',
+        href: '/register',
+        icon: UserRoundPlus,
+    },
+];
+
+const petugasSampahNav: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: '/dashboard',
+        icon: LayoutGrid,
+    },
+    {
         title: 'Pengambilan Sampah',
         href: '/pengambilan-sampah',
         icon: Recycle,
     },
 ];
 
-const footerNavItems: NavItem[] = [
+const petugasIuranNav: NavItem[] = [
     {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
+        title: 'Dashboard',
+        href: '/dashboard',
+        icon: LayoutGrid,
     },
     {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
+        title: 'Pembayaran Iuran',
+        href: '/pembayaran',
+        icon: HandCoins,
     },
 ];
-
 
 
 export function AppSidebar({ ...props }) {
@@ -109,8 +116,10 @@ export function AppSidebar({ ...props }) {
     const user = auth.user;
     const role = user.role;
     const menu = {
-        superadmin: adminNavItems,
-        lps: lpsNavItems,
+        superadmin: superadminNav,
+        adminLPS: adminLpsNav,
+        petugasSampah : petugasSampahNav,
+        petugasIuran : petugasIuranNav,
     };
     return (
         <Sidebar collapsible="icon" variant="inset">

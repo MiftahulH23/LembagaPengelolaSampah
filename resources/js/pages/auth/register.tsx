@@ -1,105 +1,130 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
-import { FormEventHandler, useEffect, useState } from 'react';
+import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 
 // --- Komponen UI Anda ---
-// Catatan: Path diubah menjadi relatif untuk mengatasi masalah resolusi path.
-// Sesuaikan path ini jika struktur folder Anda berbeda.
 import { DataTable, DataTableControls } from '@/components/data-table';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
 import { User } from '@/types';
+import { Wilayah } from '@/types/data/wilayah';
 import { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
-import InputError from '../../components/input-error';
-import TextLink from '../../components/text-link';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Wilayah } from '@/types/data/wilayah';
+import InputError from '../../components/input-error'; // Path relatif
+import { Button } from '../../components/ui/button'; // Path relatif
+import { Input } from '../../components/ui/input'; // Path relatif
+import { Label } from '../../components/ui/label'; // Path relatif
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'; // Path relatif
 
-// Definisikan tipe data untuk form, tambahkan 'role'
+// Tipe AuthUser
+interface AuthUser {
+    id: number;
+    username: string;
+    role: 'superadmin' | 'adminLPS' | 'petugasSampah' | 'petugasIuran' | string;
+    kelurahan_id: number | null; // <-- TAMBAHKAN kelurahan_id di AuthUser
+}
+
+// Tipe data untuk form
 type RegisterForm = {
     username: string;
     nohp: string;
-    role: string; // Ditambahkan
+    role: string;
     password: string;
     password_confirmation: string;
-    kelurahan_id: string;
+    kelurahan_id: string; // Tetap string karena value Select adalah string
 };
 
 export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelurahan[] }) {
-    const { user, kelurahan } = props;
-    console.log('User Data:', user);
-    // Tambahkan 'role' ke dalam state useForm
-    const { data, setData, post, processing, errors, reset } = useForm({
+    // Ambil data kelurahan (bisa 1 atau banyak)
+    const { user, kelurahan: kelurahanOptions } = props;
+
+    // Ambil data user yang sedang login
+    const { auth } = usePage<{ auth: { user: AuthUser } }>().props;
+    const loggedInUser = auth.user; // Ambil object user lengkap
+
+    // --- LOGIKA UNTUK KELURAHAN DROPDOWN ---
+    // Cek apakah dropdown kelurahan harus di-disable
+    const isKelurahanDisabled = loggedInUser.role === 'adminLPS';
+    // Tentukan nilai awal kelurahan_id
+    const initialKelurahanId =
+        isKelurahanDisabled && kelurahanOptions.length === 1
+            ? String(kelurahanOptions[0].id) // Ambil ID kelurahan adminLPS
+            : ''; // Kosong jika superadmin
+
+    // --- AKHIR LOGIKA KELURAHAN ---
+
+    const { data, setData, post, processing, errors, reset } = useForm<RegisterForm>({
         username: '',
         nohp: '',
-        role: '', // State awal untuk role
+        role: '',
         password: '',
         password_confirmation: '',
-        kelurahan_id: '',
+        kelurahan_id: initialKelurahanId, // <-- Gunakan nilai awal yang sudah ditentukan
     });
 
-    // Reset password fields setelah submit selesai
     useEffect(() => {
         return () => {
             reset('password', 'password_confirmation');
         };
     }, []);
 
+    // ... (fungsi submit tidak berubah) ...
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(route('register'), {
             preserveScroll: true,
             onSuccess: () => {
                 reset();
+                // Set ulang kelurahan_id ke nilai awalnya setelah reset
+                setData('kelurahan_id', initialKelurahanId);
                 setIsAddModalOpen(false);
                 toast.success('Akun berhasil ditambahkan');
             },
-            onError: () => {
-                toast.error('Gagal menambahkan Akun.');
+            onError: (formErrors) => {
+                Object.values(formErrors).forEach((error) => toast.error(error as string));
             },
         });
     };
-    const breadcrumb = [{ title: 'Data Iuran', href: '/pembayaran' }];
 
+    const breadcrumb = [{ title: 'Manajemen Akun', href: route('register') }];
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+    // Logika useMemo untuk memfilter role (tetap sama)
+    const availableRoles = useMemo(() => {
+        if (loggedInUser.role === 'superadmin') {
+            return [
+                { value: 'adminLPS', label: 'LPS' },
+                { value: 'superadmin', label: 'Super Admin' },
+            ];
+        }
+        if (loggedInUser.role === 'adminLPS') {
+            return [
+                { value: 'petugasSampah', label: 'Petugas Sampah' },
+                { value: 'petugasIuran', label: 'Petugas Iuran' },
+            ];
+        }
+        return [];
+    }, [loggedInUser.role]);
+
+    // ... (definisi columns tidak berubah) ...
     const columns: ColumnDef<User>[] = [
+        { id: 'no', header: 'No', cell: ({ row }) => row.index + 1 },
+        { id: 'username', accessorKey: 'username', header: 'Username' },
+        { id: 'nohp', accessorKey: 'nohp', header: 'No HP' },
+        { id: 'role', accessorKey: 'role', header: 'Role' },
         {
-            id: 'no',
-            header: 'No',
-            cell: ({ row }) => row.index + 1,
-        },
-        {
-            id: 'username',
-            accessorKey: 'username',
-            header: 'Username',
-        },
-        {
-            id: 'nohp',
-            accessorKey: 'nohp',
-            header: 'No HP',
-        },
-        {
-            id: 'role',
-            accessorKey: 'role',
-            header: 'Role',
-        },
-        {
-            id: 'kecamatan',
+            id: 'kelurahan',
             accessorKey: 'kelurahan.nama_kelurahan',
             header: 'Kelurahan',
             cell: ({ row }) => row.original.kelurahan?.nama_kelurahan || '-',
-        }
+        },
     ];
+
     return (
         <AppLayout breadcrumbs={breadcrumb}>
-            <Head title="Tambah Akun" />
+            <Head title="Manajemen Akun" />
             <div className="container">
-                <h1>Tambah Akun</h1>
+                <h1>Manajemen Akun</h1>
                 <DataTable columns={columns} data={user}>
                     {({ table }) => (
                         <DataTableControls
@@ -107,15 +132,13 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                             action={
                                 <Button
                                     onClick={() => {
-                                        data.nohp = '';
-                                        data.role = '';
-                                        data.password = '';
-                                        data.username = '';
-                                        data.password_confirmation = '';
+                                        reset();
+                                        // Set ulang kelurahan_id saat buka modal Add
+                                        setData('kelurahan_id', initialKelurahanId);
                                         setIsAddModalOpen(true);
                                     }}
                                 >
-                                    Tambah
+                                    Tambah Akun
                                 </Button>
                             }
                         ></DataTableControls>
@@ -125,7 +148,8 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                     <DialogContent>
                         <form method="POST" className="flex flex-col gap-6" onSubmit={submit}>
                             <div className="grid gap-6">
-                                {/* Input untuk Username */}
+                                {/* Input Username */}
+                                {/* ... (tidak berubah) ... */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="username">Username</Label>
                                     <Input
@@ -143,7 +167,8 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                                     <InputError message={errors.username} />
                                 </div>
 
-                                {/* Input untuk No HP */}
+                                {/* Input No HP */}
+                                {/* ... (tidak berubah) ... */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="nohp">No HP</Label>
                                     <Input
@@ -160,48 +185,63 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                                     <InputError message={errors.nohp} />
                                 </div>
 
-                                {/* Komponen Select untuk Role */}
+                                {/* Select Role Dinamis */}
+                                {/* ... (tidak berubah) ... */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="role">Role</Label>
                                     <Select required disabled={processing} value={data.role} onValueChange={(value) => setData('role', value)}>
                                         <SelectTrigger id="role" tabIndex={3}>
-                                            <SelectValue placeholder="Select a role" />
+                                            {' '}
+                                            <SelectValue placeholder="Pilih role" />{' '}
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="lps">LPS</SelectItem>
-                                            <SelectItem value="superadmin">Super Admin</SelectItem>
-                                            {/* Tambahkan role lain jika perlu */}
+                                            {' '}
+                                            {availableRoles.map((role) => (
+                                                <SelectItem key={role.value} value={role.value}>
+                                                    {' '}
+                                                    {role.label}{' '}
+                                                </SelectItem>
+                                            ))}{' '}
                                         </SelectContent>
                                     </Select>
                                     <InputError message={errors.role} />
                                 </div>
 
-                                {/* Komponen Select untuk Kecamatan */}
+                                {/* --- MODIFIKASI SELECT KELURAHAN --- */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="kelurahan_id">Kelurahan</Label>
-                                    <Select required disabled={processing} value={data.kelurahan_id} onValueChange={(value) => setData('kelurahan_id', value)}>
-                                        <SelectTrigger id="kelurahan_id" tabIndex={3}>
+                                    <Select
+                                        required
+                                        // Disable jika adminLPS, atau jika sedang processing
+                                        disabled={isKelurahanDisabled || processing}
+                                        value={data.kelurahan_id}
+                                        onValueChange={(value) => setData('kelurahan_id', value)}
+                                    >
+                                        <SelectTrigger id="kelurahan_id" tabIndex={4}>
                                             <SelectValue placeholder="Pilih Kelurahan" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                           {kelurahan.map((item) => (
-                                               <SelectItem key={item.id} value={String(item.id)}>
-                                                   {item.nama_kelurahan}
-                                               </SelectItem>
-                                           ))}
+                                            {/* Gunakan kelurahanOptions yang diterima dari props */}
+                                            {kelurahanOptions.map((item) => (
+                                                <SelectItem key={item.id} value={String(item.id)}>
+                                                    {item.nama_kelurahan}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                     <InputError message={errors.kelurahan_id} />
                                 </div>
+                                {/* --- AKHIR MODIFIKASI --- */}
 
-                                {/* Input untuk Password */}
+                                {/* Input Password */}
+                                {/* ... (tidak berubah) ... */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="password">Password</Label>
                                     <Input
                                         id="password"
                                         type="password"
                                         required
-                                        tabIndex={4}
+                                        tabIndex={5}
                                         autoComplete="new-password"
                                         value={data.password}
                                         onChange={(e) => setData('password', e.target.value)}
@@ -211,14 +251,15 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                                     <InputError message={errors.password} />
                                 </div>
 
-                                {/* Input untuk Konfirmasi Password */}
+                                {/* Input Konfirmasi Password */}
+                                {/* ... (tidak berubah) ... */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="password_confirmation">Confirm password</Label>
                                     <Input
                                         id="password_confirmation"
                                         type="password"
                                         required
-                                        tabIndex={5}
+                                        tabIndex={6}
                                         autoComplete="new-password"
                                         value={data.password_confirmation}
                                         onChange={(e) => setData('password_confirmation', e.target.value)}
@@ -228,11 +269,11 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                                     <InputError message={errors.password_confirmation} />
                                 </div>
 
-                                <Button type="submit" className="mt-2 w-full" tabIndex={6} disabled={processing}>
+                                <Button type="submit" className="mt-2 w-full" tabIndex={7} disabled={processing}>
                                     {processing ? (
                                         <>
-                                            <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                                            Meyimpan...
+                                            {' '}
+                                            <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> Menyimpan...{' '}
                                         </>
                                     ) : (
                                         'Buat akun'
