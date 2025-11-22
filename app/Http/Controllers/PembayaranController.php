@@ -8,7 +8,7 @@ use App\Models\Pembayaran;
 use App\Models\Zona;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB; // <-- IMPORT DB
+use Illuminate\Support\Facades\DB; 
 use Inertia\Inertia;
 use Carbon\Carbon; // Import Carbon
 
@@ -23,13 +23,11 @@ class PembayaranController extends Controller
             'kelurahan',
             'kecamatan',
             'zona',
-            // Load pembayaran hanya untuk tahun terpilih
             'pembayaran' => fn($q) => $q->where('tahun', $selectedYear)
         ])
             ->where('kelurahan_id', $kelurahanId)
             ->orderBy('nama')->get();
 
-        // REVISI: Ambil SEMUA data iuran yang relevan
         $iuranPeriods = Iuran::where('kelurahan_id', $kelurahanId)
             ->orderBy('tanggal_mulai_berlaku', 'desc')
             ->get();
@@ -39,8 +37,8 @@ class PembayaranController extends Controller
         return Inertia::render('lps/pembayaran/Index', [
             'kartuKeluarga' => $kartuKeluarga,
             'selectedYear' => (int) $selectedYear,
-            'iuranTerbaru' => $iuranPeriods->first(), // Tetap kirim untuk fallback (walau frontend baru tak pakai)
-            'semuaPeriodeIuran' => $iuranPeriods, // <-- REVISI: Kirim semua periode ke frontend
+            'iuranTerbaru' => $iuranPeriods->first(), 
+            'semuaPeriodeIuran' => $iuranPeriods, 
             'zonas' => $zonas,
         ]);
     }
@@ -55,7 +53,6 @@ class PembayaranController extends Controller
             'catatan' => 'nullable|string|max:255',
         ]);
 
-        // Cek dulu bulan yang sudah dibayar (Logika ini tetap penting)
         $bulanSudahDibayar = Pembayaran::where('kartu_keluarga_id', $kartuKeluarga->id)
             ->where('tahun', $validated['tahun'])
             ->whereIn('bulan', $validated['bulan'])
@@ -67,9 +64,8 @@ class PembayaranController extends Controller
 
         $dataToInsert = [];
         $now = now();
-        $diinputOleh = Auth::user()->username; // Nanti diganti user ID
+        $diinputOleh = Auth::user()->username; 
 
-        // --- REVISI UTAMA: Gunakan Transaksi dan Cek Iuran Per Bulan ---
         try {
             DB::beginTransaction();
 
@@ -81,7 +77,7 @@ class PembayaranController extends Controller
                 $iuranBerlaku = Iuran::where('kelurahan_id', $kartuKeluarga->kelurahan_id)
                     ->where('tanggal_mulai_berlaku', '<=', $tanggalBulanBerlaku)
                     ->where('tanggal_akhir_berlaku', '>=', $tanggalBulanBerlaku)
-                    ->first(); // Ambil satu yang cocok
+                    ->first(); 
 
                 // Jika tidak ada iuran yang di-set untuk bulan itu, batalkan semua
                 if (!$iuranBerlaku) {

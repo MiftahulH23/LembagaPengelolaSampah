@@ -20,7 +20,6 @@ interface GrafikIuranData {
     pendapatan: number;
 }
 
-// REVISI: Tipe data baru untuk chart pengambilan
 interface GrafikPengambilanData {
     name: string;
     dijadwalkan: number;
@@ -34,7 +33,6 @@ interface PageProps {
     dataMaxIuran: number;
 }
 
-// REVISI: Konfigurasi untuk styling chart baru
 const chartConfig = {
     pendapatan: { label: 'Pendapatan', color: 'var(--chart-1)' },
     dijadwalkan: { label: 'Dijadwalkan', color: 'var(--chart-1)' }, // Gunakan warna berbeda
@@ -55,7 +53,6 @@ const DashboardIndex: React.FC<PageProps> = ({ statistik, grafikIuran, grafikPen
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {/* Card 1: Potensi Iuran */}
                     <Card>
-                        {/* Beri tinggi minimum yang konsisten untuk semua header */}
                         <CardHeader className="flex min-h-[40px] flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Potensi Iuran (Tahunan)</CardTitle>
                             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -126,7 +123,6 @@ const DashboardIndex: React.FC<PageProps> = ({ statistik, grafikIuran, grafikPen
                                         tickLine={false}
                                         axisLine={false}
                                         tickFormatter={(value) => `Rp${Number(value) / 1000}k`}
-                                        // --- REVISI: Menggunakan domain dinamis ---
                                         domain={[0, dataMaxIuran]}
                                     />
                                     <ChartTooltip
@@ -155,7 +151,7 @@ const DashboardIndex: React.FC<PageProps> = ({ statistik, grafikIuran, grafikPen
                         </CardContent>
                     </Card>
 
-                    {/* --- REVISI: Grafik Pengambilan Sampah --- */}
+                    {/* Grafik Pengambilan Sampah  */}
                     <Card className="border border-muted bg-transparent">
                         <CardHeader>
                             <CardTitle>Progres Pengambilan Sampah Minggu Ini</CardTitle>

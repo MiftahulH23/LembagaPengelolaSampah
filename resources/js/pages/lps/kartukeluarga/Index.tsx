@@ -213,7 +213,6 @@ const Index = (props: { kartukeluarga: KartuKeluarga.Default[]; kecamatan: Kecam
         kecamatan_id: '',
     });
 
-    // State lainnya
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);

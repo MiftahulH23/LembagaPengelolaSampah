@@ -43,10 +43,10 @@ class DashboardController extends Controller
 
     private function getStatistikData(?int $kelurahanId, int $tahunIni): array
     {
-        // --- Bagian ini tetap sama ---
+        
         $totalKK = KartuKeluarga::when($kelurahanId, fn($q) => $q->where('kelurahan_id', $kelurahanId))->count();
 
-        // --- MULAI PERUBAHAN: Menghitung Potensi Pemasukan Tahunan secara Dinamis ---
+       
         $potensiPemasukanTahunan = 0;
         if ($totalKK > 0) {
             $totalNominalSatuTahun = 0;
@@ -58,8 +58,8 @@ class DashboardController extends Controller
 
                 // Cari iuran terbaru yang berlaku pada bulan tersebut untuk kelurahan ini
                 $iuranBerlaku = Iuran::when($kelurahanId, fn($q) => $q->where('kelurahan_id', $kelurahanId))
-                    ->where('created_at', '<=', $tanggalAkhirBulan) // Kunci: iuran yang dibuat sebelum/pada akhir bulan
-                    ->orderBy('created_at', 'desc') // Ambil yang paling baru
+                    ->where('created_at', '<=', $tanggalAkhirBulan) 
+                    ->orderBy('created_at', 'desc') 
                     ->first();
 
                 // Jika ada iuran yang ditemukan, tambahkan nominalnya

@@ -42,17 +42,15 @@ class ValidasiPembayaranController extends Controller
 
         // Ambil juga data setoran yang SUDAH divalidasi hari ini
         $validatedPembayaran = Pembayaran::where('status_validasi', 'validated')
-            ->whereDate('tanggal', $tanggal) // Filter tanggal bayar
-            ->with('validator:id,name,username') // <-- FIX: Ambil juga username
+            ->whereDate('tanggal', $tanggal)
+            ->with('validator:id,name,username') 
             ->get()
-            ->groupBy('diinput_oleh'); // Kelompokkan juga
-
+            ->groupBy('diinput_oleh'); 
         $summaryValidated = $validatedPembayaran->map(function ($payments, $username) {
              return [
                 'username' => $username,
                 'total' => $payments->sum('jumlah'),
                 'count' => $payments->count(),
-                // FIX: Cek name, jika null, pakai username
                 'validator' => $payments->first()->validator->name ?? $payments->first()->validator->username ?? 'N/A',
                 'validated_at' => $payments->first()->validated_at->format('H:i'),
             ];

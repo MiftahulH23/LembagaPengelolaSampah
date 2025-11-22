@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-// PASTIKAN HANYA ADA INI, JANGAN ADA 'use Maatwebsite\Excel\Excel;'
 use Maatwebsite\Excel\Facades\Excel;
 
 use App\Imports\DataWargaImport;
@@ -110,8 +109,6 @@ class KartukeluargaController extends Controller
             }
     
             $kecamatanId = $kelurahan->kecamatan_id;
-    
-            // Langsung panggil Excel::import. Tidak ada lagi 'dispatch' atau 'job'.
             Excel::import(new DataWargaImport($user->kelurahan_id, $kecamatanId), $request->file('file'));
     
         } catch (\Throwable $e) {

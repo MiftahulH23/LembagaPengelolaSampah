@@ -18,7 +18,6 @@ class PengambilanSampahController extends Controller
         $user = auth()->user();
         $kelurahanId = $user->kelurahan_id;
 
-        // --- REVISI UTAMA: Pastikan locale adalah 'id' ---
         // Ini memastikan Carbon menghasilkan "Senin", "Selasa", dll.
         $namaHari = $selectedDate->locale('id')->translatedFormat('l');
 
@@ -65,7 +64,6 @@ class PengambilanSampahController extends Controller
                 'diinput_oleh' => $user->username,
             ]
         );
-        // --- BEST PRACTICE: Gunakan to_route untuk refresh data ---
         return to_route('pengambilan-sampah.index', ['date' => $validated['date']])
             ->with('success', 'Status berhasil diperbarui.');
     }

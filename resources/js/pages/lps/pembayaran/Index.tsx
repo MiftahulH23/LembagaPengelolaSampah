@@ -16,11 +16,9 @@ import { cn } from '@/lib/utils';
 import { Check, HandCoins, X } from 'lucide-react';
 import { DataTableFilter } from '@/components/data-table/data-table-filter';
 
-// --- Tipe Data ---
-// Asumsi kamu import dari file types global
+
 import { KartuKeluarga } from '@/types/data/kartukeluarga';
 import { Zona } from '@/types/data/zona';
-// Tipe Iuran ini (Iuran & IuranPageProps) harusnya ada di file ini atau diimport
 interface Iuran {
     id: number;
     nominal_iuran: number;
@@ -28,10 +26,10 @@ interface Iuran {
     tanggal_akhir_berlaku: string;
 }
 interface IuranPageProps {
-    kartuKeluarga: KartuKeluarga.Default[]; // Menggunakan tipe global
+    kartuKeluarga: KartuKeluarga.Default[]; 
     selectedYear: number;
     iuranTerbaru: Iuran | null;
-    zonas: Zona.Default[]; // Menggunakan tipe global
+    zonas: Zona.Default[]; 
     semuaPeriodeIuran: Iuran[] | null;
 }
 
@@ -46,7 +44,7 @@ function DialogTambahPembayaran({
 }: {
     months: string[];
     selectedYear: number;
-    selectedKK: KartuKeluarga.Default | null; // Tipe global
+    selectedKK: KartuKeluarga.Default | null; 
     isPaymentModalOpen: boolean;
     setIsPaymentModalOpen: (open: boolean) => void;
     semuaPeriodeIuran: Iuran[] | null;
@@ -108,8 +106,6 @@ function DialogTambahPembayaran({
     const handlePaymentSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!selectedKK) return;
-
-        // Simpan checkbox asli pilihan user
         const originalBulanSelection = data.bulan;
         const paidMonths = getPaidMonths(selectedKK);
         const newMonthsToPay = data.bulan.filter((month) => !paidMonths.includes(month));
@@ -119,17 +115,13 @@ function DialogTambahPembayaran({
             return;
         }
 
-        // --- PERBAIKAN ERROR 1 ---
-        // 1. Set state hook 'data.bulan' HANYA ke bulan yang akan dibayar
         setData('bulan', newMonthsToPay);
 
-        // 2. Panggil 'post' TANPA wrapper 'data:'
         post(route('pembayaran.store', selectedKK.id), {
             preserveScroll: false,
-            preserveState: false, // false agar me-refresh data tabel setelah sukses
+            preserveState: false, 
             onSuccess: () => {
                 setIsPaymentModalOpen(false);
-                // Biarkan state 'data.bulan' ter-reset otomatis saat modal dibuka lagi
             },
             onError: (formErrors: any) => {
                 if (formErrors.tanggal) {
@@ -139,11 +131,9 @@ function DialogTambahPembayaran({
                 } else {
                     toast.error('Gagal menyimpan pembayaran. Periksa kembali data.');
                 }
-                // 3. Kembalikan state 'data.bulan' ke pilihan checkbox asli user jika error
                 setData('bulan', originalBulanSelection);
             },
         });
-        // --- AKHIR PERBAIKAN ERROR 1 ---
     };
 
     const paidMonths = getPaidMonths(selectedKK);

@@ -40,12 +40,9 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     };
 
     return (
-        // REVISI UTAMA: Div terluar ini sekarang bertugas untuk memposisikan card di tengah
         <div className="flex h-screen w-full items-center justify-center bg-sidebar p-4">
             <Head title="Masuk" />
-            {/* Container ini adalah card utama yang akan menjadi 2 kolom di layar besar */}
             <div className="w-full max-w-4xl overflow-hidden rounded-lg shadow-2xl lg:grid lg:grid-cols-2">
-                {/* Panel Kiri (Branding) */}
                 <div className="hidden flex-col items-center justify-center bg-sidebar p-12 lg:flex">
                     <div className="mb-6 flex h-32 w-32 items-center justify-center rounded bg-card font-bold text-card-foreground">
                         <img src={Trash} alt="Logo LPS" />
@@ -53,7 +50,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     <h1 className="text-2xl font-bold text-sidebar-foreground">SILEPAS PKU</h1>
                 </div>
 
-                {/* Panel Kanan (Form Login) */}
                 <div className="flex flex-col items-center justify-center bg-card p-8 sm:p-12 bg-white rounded-lg">
                     <div className="w-full max-w-sm">
                         <h2 className="mb-8 text-center text-3xl font-bold text-card-foreground">Masuk</h2>

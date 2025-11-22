@@ -23,28 +23,23 @@ interface PageProps {
 }
 
 const PengambilanSampahIndex: React.FC<PageProps> = ({ checklistData: initialChecklist, selectedDate }) => {
-    // Optimistic UI state
     const [checklist, setChecklist] = React.useState(initialChecklist);
 
-    // Sinkronisasi state jika props dari Inertia berubah (misal saat ganti tanggal atau setelah save)
     React.useEffect(() => {
         setChecklist(initialChecklist);
     }, [initialChecklist]);
 
     const handleDateChange = (date: string) => {
-        // --- REVISI UTAMA: Hapus 'preserveState: true' ---
         router.get(
             route('pengambilan-sampah.index'),
             { date },
             {
                 preserveScroll: true,
-                // Dengan menghapus preserveState, kita memastikan data selalu segar dari server
             }
         );
     };
 
     const handleMark = (zona: string, action: 'ambil' | 'batal') => {
-        // Optimistic UI update
         setChecklist((current) =>
             current.map((item) =>
                 item.zona === zona ? { ...item, status: action === 'ambil' ? 'Sudah Diambil' : 'Menunggu' } : item,

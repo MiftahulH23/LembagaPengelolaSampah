@@ -1,8 +1,6 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler, useEffect, useMemo, useState } from 'react';
-
-// --- Komponen UI Anda ---
 import { DataTable, DataTableControls } from '@/components/data-table';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
@@ -10,10 +8,10 @@ import { User } from '@/types';
 import { Wilayah } from '@/types/data/wilayah';
 import { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
-import InputError from '../../components/input-error'; // Path relatif
-import { Button } from '../../components/ui/button'; // Path relatif
-import { Input } from '../../components/ui/input'; // Path relatif
-import { Label } from '../../components/ui/label'; // Path relatif
+import InputError from '../../components/input-error'; 
+import { Button } from '../../components/ui/button'; 
+import { Input } from '../../components/ui/input'; 
+import { Label } from '../../components/ui/label'; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'; // Path relatif
 
 // Tipe AuthUser
@@ -21,7 +19,7 @@ interface AuthUser {
     id: number;
     username: string;
     role: 'superadmin' | 'adminLPS' | 'petugasSampah' | 'petugasIuran' | string;
-    kelurahan_id: number | null; // <-- TAMBAHKAN kelurahan_id di AuthUser
+    kelurahan_id: number | null; 
 }
 
 // Tipe data untuk form
@@ -31,27 +29,22 @@ type RegisterForm = {
     role: string;
     password: string;
     password_confirmation: string;
-    kelurahan_id: string; // Tetap string karena value Select adalah string
+    kelurahan_id: string; 
 };
 
 export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelurahan[] }) {
-    // Ambil data kelurahan (bisa 1 atau banyak)
     const { user, kelurahan: kelurahanOptions } = props;
 
-    // Ambil data user yang sedang login
     const { auth } = usePage<{ auth: { user: AuthUser } }>().props;
     const loggedInUser = auth.user; // Ambil object user lengkap
 
-    // --- LOGIKA UNTUK KELURAHAN DROPDOWN ---
-    // Cek apakah dropdown kelurahan harus di-disable
     const isKelurahanDisabled = loggedInUser.role === 'adminLPS';
-    // Tentukan nilai awal kelurahan_id
+    
     const initialKelurahanId =
         isKelurahanDisabled && kelurahanOptions.length === 1
-            ? String(kelurahanOptions[0].id) // Ambil ID kelurahan adminLPS
-            : ''; // Kosong jika superadmin
+            ? String(kelurahanOptions[0].id) 
+            : '';
 
-    // --- AKHIR LOGIKA KELURAHAN ---
 
     const { data, setData, post, processing, errors, reset } = useForm<RegisterForm>({
         username: '',
@@ -59,7 +52,7 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
         role: '',
         password: '',
         password_confirmation: '',
-        kelurahan_id: initialKelurahanId, // <-- Gunakan nilai awal yang sudah ditentukan
+        kelurahan_id: initialKelurahanId, 
     });
 
     useEffect(() => {
@@ -68,14 +61,12 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
         };
     }, []);
 
-    // ... (fungsi submit tidak berubah) ...
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(route('register'), {
             preserveScroll: true,
             onSuccess: () => {
                 reset();
-                // Set ulang kelurahan_id ke nilai awalnya setelah reset
                 setData('kelurahan_id', initialKelurahanId);
                 setIsAddModalOpen(false);
                 toast.success('Akun berhasil ditambahkan');
@@ -89,7 +80,6 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
     const breadcrumb = [{ title: 'Manajemen Akun', href: route('register') }];
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    // Logika useMemo untuk memfilter role (tetap sama)
     const availableRoles = useMemo(() => {
         if (loggedInUser.role === 'superadmin') {
             return [
@@ -106,7 +96,7 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
         return [];
     }, [loggedInUser.role]);
 
-    // ... (definisi columns tidak berubah) ...
+   
     const columns: ColumnDef<User>[] = [
         { id: 'no', header: 'No', cell: ({ row }) => row.index + 1 },
         { id: 'username', accessorKey: 'username', header: 'Username' },
@@ -133,7 +123,6 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                                 <Button
                                     onClick={() => {
                                         reset();
-                                        // Set ulang kelurahan_id saat buka modal Add
                                         setData('kelurahan_id', initialKelurahanId);
                                         setIsAddModalOpen(true);
                                     }}
@@ -148,8 +137,6 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                     <DialogContent>
                         <form method="POST" className="flex flex-col gap-6" onSubmit={submit}>
                             <div className="grid gap-6">
-                                {/* Input Username */}
-                                {/* ... (tidak berubah) ... */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="username">Username</Label>
                                     <Input
@@ -167,8 +154,6 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                                     <InputError message={errors.username} />
                                 </div>
 
-                                {/* Input No HP */}
-                                {/* ... (tidak berubah) ... */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="nohp">No HP</Label>
                                     <Input
@@ -185,8 +170,6 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                                     <InputError message={errors.nohp} />
                                 </div>
 
-                                {/* Select Role Dinamis */}
-                                {/* ... (tidak berubah) ... */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="role">Role</Label>
                                     <Select required disabled={processing} value={data.role} onValueChange={(value) => setData('role', value)}>
@@ -207,12 +190,10 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                                     <InputError message={errors.role} />
                                 </div>
 
-                                {/* --- MODIFIKASI SELECT KELURAHAN --- */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="kelurahan_id">Kelurahan</Label>
                                     <Select
                                         required
-                                        // Disable jika adminLPS, atau jika sedang processing
                                         disabled={isKelurahanDisabled || processing}
                                         value={data.kelurahan_id}
                                         onValueChange={(value) => setData('kelurahan_id', value)}
@@ -221,7 +202,6 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                                             <SelectValue placeholder="Pilih Kelurahan" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {/* Gunakan kelurahanOptions yang diterima dari props */}
                                             {kelurahanOptions.map((item) => (
                                                 <SelectItem key={item.id} value={String(item.id)}>
                                                     {item.nama_kelurahan}
@@ -231,10 +211,7 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                                     </Select>
                                     <InputError message={errors.kelurahan_id} />
                                 </div>
-                                {/* --- AKHIR MODIFIKASI --- */}
 
-                                {/* Input Password */}
-                                {/* ... (tidak berubah) ... */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="password">Password</Label>
                                     <Input
@@ -251,8 +228,6 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                                     <InputError message={errors.password} />
                                 </div>
 
-                                {/* Input Konfirmasi Password */}
-                                {/* ... (tidak berubah) ... */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="password_confirmation">Confirm password</Label>
                                     <Input

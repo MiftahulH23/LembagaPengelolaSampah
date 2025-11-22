@@ -13,21 +13,19 @@ import { toast } from 'sonner';
 // --- Tipe Data ---
 type JadwalTersimpan = Record<string, string[]>;
 
-// --- REVISI: Tipe data baru untuk 'semuaZona' ---
 interface Zona {
     id: number;
     nama_zona: string;
 }
 
 interface PageProps {
-    semuaZona: Zona[]; // <-- REVISI
+    semuaZona: Zona[]; 
     jadwalTersimpan: JadwalTersimpan;
 }
 
-// --- Komponen Modal Edit Jadwal ---
 const EditJadwalModal: React.FC<{
     hari: string;
-    semuaZona: Zona[]; // <-- REVISI
+    semuaZona: Zona[]; 
     zonaTerpilihAwal: string[];
 }> = ({ hari, semuaZona, zonaTerpilihAwal }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,10 +49,9 @@ const EditJadwalModal: React.FC<{
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
         post(route('jadwal.store'), {
-            preserveScroll: false, // Ganti ke false agar notifikasi terlihat
+            preserveScroll: false, 
             onSuccess: () => {
                 setIsModalOpen(false);
-                // Notifikasi sukses akan ditangani oleh flash message Laravel
             },
             onError: (err) => {
                 toast.error('Gagal menyimpan jadwal.');
@@ -77,7 +74,6 @@ const EditJadwalModal: React.FC<{
                     </DialogHeader>
                     <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-4 pr-6">
                         {semuaZona.length > 0 ? (
-                            // --- REVISI: Gunakan 'nama_zona' dari objek zona ---
                             semuaZona.map((zona) => (
                                 <div key={zona.id} className="flex items-center space-x-2">
                                     <Checkbox

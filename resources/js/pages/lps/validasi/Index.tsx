@@ -11,13 +11,10 @@ import AppLayout from '@/layouts/app-layout';
 import { Pembayaran } from '@/types/data/pembayaran';
 import { Head, router, useForm } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import React, { useState } from 'react'; // <-- 1. IMPORT useState
-// --- 2. IMPORT KOMPONEN MODAL & IKON ---
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CheckCircle2, CircleOff, Hourglass, TriangleAlert } from 'lucide-react';
-// --- AKHIR IMPORT ---
 
-// Props untuk halaman ini
 interface ValidasiProps {
     summarySetoranPending: Pembayaran.SummaryPending[];
     summarySetoranValidated: Pembayaran.SummaryValidated[];
@@ -25,7 +22,6 @@ interface ValidasiProps {
     totalPending: number;
 }
 
-// Helper format
 const formatRupiah = (value: number) => {
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -34,9 +30,7 @@ const formatRupiah = (value: number) => {
     }).format(value);
 };
 
-// --- 3. REVISI TOTAL KOMPONEN ValidateButton ---
 const ValidateButton = ({ username, tanggal, total }: { username: string; tanggal: string; total: number }) => {
-    // State untuk modal
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const { post, processing } = useForm({
@@ -46,7 +40,6 @@ const ValidateButton = ({ username, tanggal, total }: { username: string; tangga
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Post data, dan tutup modal kalau sukses
         post(route('validasi.store'), {
             onSuccess: () => setIsModalOpen(false),
         });
@@ -54,11 +47,10 @@ const ValidateButton = ({ username, tanggal, total }: { username: string; tangga
 
     return (
         <>
-            {/* 1. Tombol Trigger untuk Buka Modal */}
             <div className="mt-4 text-right">
                 <Button
                     type="button"
-                    onClick={() => setIsModalOpen(true)} // <-- Buka modal
+                    onClick={() => setIsModalOpen(true)} 
                     variant="default"
                 >
                     <CheckCircle2 className="mr-2 h-4 w-4" />
@@ -66,7 +58,6 @@ const ValidateButton = ({ username, tanggal, total }: { username: string; tangga
                 </Button>
             </div>
 
-            {/* 2. Modal Konfirmasi (Mirip template kamu) */}
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent>
                     <form onSubmit={handleSubmit}>
@@ -88,14 +79,14 @@ const ValidateButton = ({ username, tanggal, total }: { username: string; tangga
                             <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() => setIsModalOpen(false)} // <-- Tombol Batal
+                                onClick={() => setIsModalOpen(false)} 
                             >
                                 Batal
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={processing}
-                                variant="default" // <-- Tombol Konfirmasi
+                                variant="default"
                             >
                                 {processing ? 'Memvalidasi...' : 'Ya, Validasi'}
                             </Button>
@@ -106,9 +97,7 @@ const ValidateButton = ({ username, tanggal, total }: { username: string; tangga
         </>
     );
 };
-// --- AKHIR REVISI ValidateButton ---
 
-// Kolom untuk tabel detail di dalam accordion
 const detailColumns: ColumnDef<Pembayaran.Default>[] = [
     {
         accessorFn: (row) => row.kartu_keluarga?.nama,
@@ -129,7 +118,6 @@ const detailColumns: ColumnDef<Pembayaran.Default>[] = [
         accessorKey: 'bulan',
         header: 'Bulan',
         cell: ({ row }) => {
-            // FIX TS
             const monthName = new Date(Number(row.original.tahun), Number(row.original.bulan) - 1, 1).toLocaleString('id-ID', { month: 'short' });
             return `${monthName} ${row.original.tahun}`;
         },
@@ -156,15 +144,12 @@ const ValidasiIndex: React.FC<ValidasiProps> = ({ summarySetoranPending, summary
             <div className="container">
                 <h1 className="mb-4 text-2xl font-semibold">Validasi Setoran Harian</h1>
 
-                {/* Filter Tanggal */}
                 <div className="mb-6 max-w-xs space-y-2">
                     <Label htmlFor="tanggalFilter">Pilih Tanggal Setoran</Label>
                     <Input id="tanggalFilter" type="date" value={tanggalFilter} onChange={handleDateChange} />
                 </div>
 
-                {/* Grid Summary */}
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    {/* --- Kolom Pending --- */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -188,11 +173,10 @@ const ValidasiIndex: React.FC<ValidasiProps> = ({ summarySetoranPending, summary
                                             </AccordionTrigger>
                                             <AccordionContent>
                                                 <DataTable columns={detailColumns} data={item.payments}  />
-                                                {/* --- 4. KIRIM PROP 'total' --- */}
                                                 <ValidateButton
                                                     username={item.username}
                                                     tanggal={tanggalFilter}
-                                                    total={item.total} // <-- Tambahkan ini
+                                                    total={item.total} 
                                                 />
                                             </AccordionContent>
                                         </AccordionItem>
@@ -207,7 +191,6 @@ const ValidasiIndex: React.FC<ValidasiProps> = ({ summarySetoranPending, summary
                         </CardContent>
                     </Card>
 
-                    {/* --- Kolom Validated --- */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">

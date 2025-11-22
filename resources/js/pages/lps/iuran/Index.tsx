@@ -11,11 +11,9 @@ import { Iuran } from '@/types/data/iuran';
 import { Head, router, useForm } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 import { SquarePen, Trash2, TriangleAlert } from 'lucide-react';
-// Import useEffect dan useState
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
-// Helper format "Jan 2025" (FIXED)
 const formatMonthYear = (dateString: string | null | undefined): string => {
     if (!dateString) return '-';
     try {
@@ -37,7 +35,7 @@ const months = [
 
 // Interface untuk form data
 interface IuranFormData {
-    [key: string]: any; // Memperbolehkan index signature
+    [key: string]: any; 
     nominal_iuran: string;
     bulan_mulai: string;
     tahun_mulai: string;
@@ -84,7 +82,6 @@ const IuranForm = ({ data, setData, errors }: IuranFormProps) => {
 
     return (
         <div className="space-y-4">
-            {/* Nominal Iuran */}
             <div>
                 <Label htmlFor="nominal_iuran">Nominal Iuran (Rp)</Label>
                 <Input
@@ -96,7 +93,6 @@ const IuranForm = ({ data, setData, errors }: IuranFormProps) => {
                 {errors.nominal_iuran && <p className="mt-1 text-sm text-red-500">{errors.nominal_iuran}</p>}
             </div>
 
-            {/* Periode Mulai Berlaku */}
             <div>
                 <Label>Periode Mulai Berlaku</Label>
                 <div className="grid grid-cols-2 gap-4">
@@ -128,7 +124,6 @@ const IuranForm = ({ data, setData, errors }: IuranFormProps) => {
                 {errors.tahun_mulai && <p className="mt-1 text-sm text-red-500">{errors.tahun_mulai}</p>}
             </div>
 
-            {/* Periode Akhir Berlaku */}
             <div>
                 <Label>Periode Akhir Berlaku</Label>
                 <div className="grid grid-cols-2 gap-4">
@@ -159,8 +154,6 @@ const IuranForm = ({ data, setData, errors }: IuranFormProps) => {
                 {errors.bulan_akhir && <p className="mt-1 text-sm text-red-500">{errors.bulan_akhir}</p>}
                 {errors.tahun_akhir && <p className="mt-1 text-sm text-red-500">{errors.tahun_akhir}</p>}
             </div>
-
-            {/* Error tumpang tindih */}
             {errors['tanggal_mulai_berlaku'] && (
                 <p className="mt-1 text-sm text-red-500">
                     {errors['tanggal_mulai_berlaku']}
@@ -174,7 +167,6 @@ const IuranForm = ({ data, setData, errors }: IuranFormProps) => {
         </div>
     );
 };
-// --- AKHIR DARI KOMPONEN FORM ---
 
 
 /**
@@ -254,12 +246,10 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
         e.preventDefault();
         post(route('iuran.store'), {
             preserveScroll: true,
-            // --- PERBAIKAN ERROR 'never' ---
             onSuccess: () => {
-                reset(); // HANYA PANGGIL reset()
+                reset(); 
                 setIsAddModalOpen(false);
             },
-            // --- AKHIR PERBAIKAN ---
             onError: (formErrors) => {
                 Object.values(formErrors).forEach((error) => toast.error(error));
             },
@@ -353,12 +343,10 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
                 {/* Modal Edit Data */}
                 <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
                     <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
-                        {/* --- PERBAIKAN ERROR JSX --- */}
                         <DialogHeader>
                             <DialogTitle>Edit Periode Iuran</DialogTitle>
                             <DialogDescription>Ubah nominal atau periode iuran yang sudah ada.</DialogDescription>
                         </DialogHeader> 
-                        {/* Tag </Header> saya ganti jadi </DialogHeader> */}
                         
                         <form onSubmit={handleEditSubmit}>
                             <IuranForm 
@@ -375,7 +363,6 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
                     </DialogContent>
                 </Dialog>
 
-                {/* Modal Delete Data (Tidak Berubah) */}
                 <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
                     <DialogContent>
                         <div className="flex flex-col items-center justify-center gap-3 pt-4">
