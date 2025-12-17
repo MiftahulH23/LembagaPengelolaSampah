@@ -39,7 +39,6 @@ class DashboardController extends Controller
     /**
      * Mengambil dan memformat data untuk kartu statistik.
      */
-    // Jangan lupa tambahkan `use App\Models\Iuran;` di bagian atas file controller kamu.
 
     private function getStatistikData(?int $kelurahanId, int $tahunIni): array
     {
@@ -53,22 +52,18 @@ class DashboardController extends Controller
 
             // Looping untuk setiap bulan dari Januari (1) hingga Desember (12)
             for ($bulan = 1; $bulan <= 12; $bulan++) {
-                // Tentukan tanggal referensi (akhir bulan) untuk pencarian iuran
                 $tanggalAkhirBulan = Carbon::create($tahunIni, $bulan, 1)->endOfMonth();
 
-                // Cari iuran terbaru yang berlaku pada bulan tersebut untuk kelurahan ini
                 $iuranBerlaku = Iuran::when($kelurahanId, fn($q) => $q->where('kelurahan_id', $kelurahanId))
                     ->where('created_at', '<=', $tanggalAkhirBulan) 
                     ->orderBy('created_at', 'desc') 
                     ->first();
 
-                // Jika ada iuran yang ditemukan, tambahkan nominalnya
                 if ($iuranBerlaku) {
                     $totalNominalSatuTahun += $iuranBerlaku->nominal_iuran;
                 }
             }
 
-            // Kalkulasi total potensi pemasukan
             $potensiPemasukanTahunan = $totalKK * $totalNominalSatuTahun;
         }
        

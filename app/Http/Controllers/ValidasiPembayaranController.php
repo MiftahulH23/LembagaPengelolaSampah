@@ -11,9 +11,6 @@ use Inertia\Inertia;
 
 class ValidasiPembayaranController extends Controller
 {
-    /**
-     * Menampilkan halaman validasi
-     */
     public function index(Request $request)
     {
         // Ambil tanggal dari request, jika tidak ada, pakai hari ini
@@ -36,9 +33,9 @@ class ValidasiPembayaranController extends Controller
                 'username' => $username,
                 'total' => $payments->sum('jumlah'),
                 'count' => $payments->count(),
-                'payments' => $payments, // Kirim detail pembayarannya
+                'payments' => $payments, 
             ];
-        })->values(); // values() untuk reset keys jadi array biasa
+        })->values(); 
 
         // Ambil juga data setoran yang SUDAH divalidasi hari ini
         $validatedPembayaran = Pembayaran::where('status_validasi', 'validated')
@@ -65,9 +62,6 @@ class ValidasiPembayaranController extends Controller
         ]);
     }
 
-    /**
-     * Menyimpan (melakukan) validasi
-     */
     public function validateSetoran(Request $request)
     {
         $validated = $request->validate([

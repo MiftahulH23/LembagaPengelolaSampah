@@ -16,9 +16,7 @@ use Inertia\Inertia;
 
 class KartukeluargaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    
     public function index()
     {
         $kelurahanId = auth()->user()->kelurahan_id ?? null;
@@ -40,9 +38,7 @@ class KartukeluargaController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -62,9 +58,7 @@ class KartukeluargaController extends Controller
         return redirect()->route('kartukeluarga.index');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    
     public function update(Request $request, string $id)
     {
         $validated = $request->validate([
@@ -84,18 +78,13 @@ class KartukeluargaController extends Controller
         return redirect()->route('kartukeluarga.index');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
     public function destroy(string $id)
     {
         KartuKeluarga::where('id', $id)->delete();
         return redirect()->route('kartukeluarga.index');
     }
 
-    /**
-     * Import data from Excel.
-     */
     public function import(Request $request)
     {
         $request->validate(['file' => 'required|file|mimes:xlsx,xls']);
@@ -112,12 +101,10 @@ class KartukeluargaController extends Controller
             Excel::import(new DataWargaImport($user->kelurahan_id, $kecamatanId), $request->file('file'));
     
         } catch (\Throwable $e) {
-            // Jika ada error, catat di log
             Log::error("EXCEPTION SAAT IMPOR LANGSUNG: " . $e->getMessage() . " di file " . $e->getFile() . " baris " . $e->getLine());
             return redirect()->back()->withErrors(['file' => 'Terjadi error saat impor. Silakan cek log untuk detail.']);
         }
     
-        // Ganti pesan suksesnya
         return redirect()->route('kartukeluarga.index')->with('success', 'Data berhasil diimpor!');
     }
 }

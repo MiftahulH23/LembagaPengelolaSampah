@@ -21,7 +21,7 @@ class JadwalController extends Controller
         // Ambil semua zona unik dari kartu_keluarga untuk kelurahan ini
        $listZona = Zona::where('kelurahan_id', $kelurahanId)
             ->orderBy('nama_zona')
-            ->get(); // Ambil seluruh objek zona (id dan nama_zona)
+            ->get(); 
 
         // Ambil jadwal yang sudah ada dari database
         $jadwalTersimpan = Jadwal::where('kelurahan_id', $kelurahanId)
@@ -48,7 +48,7 @@ class JadwalController extends Controller
         $validated = $request->validate([
             'hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
             'zona' => 'nullable|array',
-            'zona.*' => 'string', // Data yang dikirim tetap string (nama_zona)
+            'zona.*' => 'string', 
         ]);
         
         DB::transaction(function () use ($validated, $kelurahanId) {
@@ -76,7 +76,6 @@ class JadwalController extends Controller
             }
         });
 
-        // Redirect agar props di-refresh
         return to_route('jadwal.index')
             ->with('success', 'Jadwal untuk hari ' . $validated['hari'] . ' berhasil diperbarui.');
     }

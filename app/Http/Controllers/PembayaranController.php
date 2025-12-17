@@ -49,7 +49,7 @@ class PembayaranController extends Controller
             'bulan' => 'required|array|min:1',
             'bulan.*' => 'required|integer|between:1,12',
             'tahun' => 'required|integer',
-            'tanggal' => 'required|date', // Ini adalah tanggal pencatatan pembayaran
+            'tanggal' => 'required|date', 
             'catatan' => 'nullable|string|max:255',
         ]);
 
@@ -70,23 +70,19 @@ class PembayaranController extends Controller
             DB::beginTransaction();
 
             foreach ($validated['bulan'] as $bulan) {
-                // Buat tanggal representatif untuk bulan yang dibayar (misal: 1 Januari 2025)
                 $tanggalBulanBerlaku = Carbon::create($validated['tahun'], $bulan, 1)->startOfDay();
 
-                // Cari iuran yang berlaku untuk bulan tersebut
                 $iuranBerlaku = Iuran::where('kelurahan_id', $kartuKeluarga->kelurahan_id)
                     ->where('tanggal_mulai_berlaku', '<=', $tanggalBulanBerlaku)
                     ->where('tanggal_akhir_berlaku', '>=', $tanggalBulanBerlaku)
                     ->first(); 
 
-                // Jika tidak ada iuran yang di-set untuk bulan itu, batalkan semua
                 if (!$iuranBerlaku) {
                     DB::rollBack();
                     $namaBulan = $tanggalBulanBerlaku->locale('id')->monthName;
                     return back()->withErrors(['bulan' => "Tidak ada tarif iuran yang berlaku untuk bulan {$namaBulan} {$validated['tahun']}. Silakan atur di menu Iuran."]);
                 }
 
-                // Kumpulkan data untuk insert
                 $dataToInsert[] = [
                     'kartu_keluarga_id' => $kartuKeluarga->id,
                     'iuran_id' => $iuranBerlaku->id, 
@@ -102,14 +98,13 @@ class PembayaranController extends Controller
                 ];
             }
 
-            // Insert semua data sekaligus jika loop berhasil
             if (!empty($dataToInsert)) {
                 Pembayaran::insert($dataToInsert);
             }
 
-            DB::commit(); // Semua sukses, simpan ke DB
+            DB::commit(); 
         } catch (\Exception $e) {
-            DB::rollBack(); // Ada error, batalkan
+            DB::rollBack(); 
             return back()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
         }
 
