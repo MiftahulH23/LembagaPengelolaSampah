@@ -85,8 +85,8 @@ export function DataTableControls<T>(props: DataTableControls<T>) {
   );
 }
 
-export function DataTable<Data, Value>(props: DataTable<Data, Value> & Omit<React.ComponentProps<"div">, "children">) {
-  const { columns, data, children, controls = { pagination: true, sorting: true }, className, fixed = false, pagination, ...rest } = props;
+export function DataTable<Data, Value>(props: DataTable<Data, Value> & Omit<React.ComponentProps<"div">, "children"> & { columnVisibility?: any }) {
+  const { columns, data, children, controls = { pagination: true, sorting: true }, className, fixed = false, pagination, columnVisibility, ...rest } = props;
 
   const defaultPageSize = 10;
 
@@ -130,6 +130,7 @@ export function DataTable<Data, Value>(props: DataTable<Data, Value> & Omit<Reac
       sorting,
       columnFilters,
       globalFilter,
+      columnVisibility,
     },
     filterFns: customFilterFns,
   });

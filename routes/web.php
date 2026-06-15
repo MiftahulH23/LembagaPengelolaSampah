@@ -24,27 +24,38 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::resource('kecamatan', KecamatanController::class);
-    Route::resource('kelurahan', KelurahanController::class);
-    Route::resource('kartukeluarga', KartukeluargaController::class);
-    Route::resource('iuran', IuranController::class);
-    Route::resource('zona', ZonaController::class);
+    // Superadmin
+    Route::middleware('role:superadmin')->group(function () {
+        Route::resource('kecamatan', KecamatanController::class);
+        Route::resource('kelurahan', KelurahanController::class);
+    });
 
-    Route::get('/pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index');
-    Route::post('/pembayaran/{kartuKeluarga}', [PembayaranController::class, 'store'])->name('pembayaran.store');
+    // AdminLPS
+    Route::middleware('role:adminLPS')->group(function () {
+        Route::resource('kartukeluarga', KartukeluargaController::class);
+        Route::post('/kartukeluarga/import', [KartukeluargaController::class, 'import'])->name('kartukeluarga.import');
+        Route::resource('iuran', IuranController::class);
+        Route::resource('zona', ZonaController::class);
 
-    Route::get('/validasi-pembayaran', [ValidasiPembayaranController::class, 'index'])
-         ->name('validasi.index');
-    Route::post('/validasi-pembayaran/validate', [ValidasiPembayaranController::class, 'validateSetoran'])
-         ->name('validasi.store');
+        Route::get('/validasi-pembayaran', [ValidasiPembayaranController::class, 'index'])->name('validasi.index');
+        Route::post('/validasi-pembayaran/validate', [ValidasiPembayaranController::class, 'validateSetoran'])->name('validasi.store');
          
-    Route::get('/jadwal-pengambilan', [JadwalController::class, 'index'])->name('jadwal.index');
-    Route::post('/jadwal-pengambilan', [JadwalController::class, 'store'])->name('jadwal.store');
+        Route::get('/jadwal-pengambilan', [JadwalController::class, 'index'])->name('jadwal.index');
+        Route::post('/jadwal-pengambilan', [JadwalController::class, 'store'])->name('jadwal.store');
+    });
 
-    Route::get('/pengambilan-sampah', [PengambilanSampahController::class, 'index'])->name('pengambilan-sampah.index');
-    Route::post('/pengambilan-sampah', [PengambilanSampahController::class, 'store'])->name('pengambilan-sampah.store');
-    Route::delete('/pengambilan-sampah', [PengambilanSampahController::class, 'destroy'])->name('pengambilan-sampah.destroy');
-    Route::post('/kartukeluarga/import', [KartukeluargaController::class, 'import'])->name('kartukeluarga.import');
+    // Petugas Iuran
+    Route::middleware('role:petugasIuran')->group(function () {
+        Route::get('/pembayaran', [PembayaranController::class, 'index'])->name('pembayaran.index');
+        Route::post('/pembayaran/{kartuKeluarga}', [PembayaranController::class, 'store'])->name('pembayaran.store');
+    });
+
+    // Petugas Sampah
+    Route::middleware('role:petugasSampah')->group(function () {
+        Route::get('/pengambilan-sampah', [PengambilanSampahController::class, 'index'])->name('pengambilan-sampah.index');
+        Route::post('/pengambilan-sampah', [PengambilanSampahController::class, 'store'])->name('pengambilan-sampah.store');
+        Route::delete('/pengambilan-sampah', [PengambilanSampahController::class, 'destroy'])->name('pengambilan-sampah.destroy');
+    });
 });
 
 

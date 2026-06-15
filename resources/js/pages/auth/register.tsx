@@ -38,7 +38,7 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
     const { auth } = usePage<{ auth: { user: AuthUser } }>().props;
     const loggedInUser = auth.user; // Ambil object user lengkap
 
-    const isKelurahanDisabled = loggedInUser.role === 'adminLPS';
+    const isKelurahanDisabled = loggedInUser?.role === 'adminLPS';
     
     const initialKelurahanId =
         isKelurahanDisabled && kelurahanOptions.length === 1
@@ -81,20 +81,20 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const availableRoles = useMemo(() => {
-        if (loggedInUser.role === 'superadmin') {
+        if (loggedInUser?.role === 'superadmin') {
             return [
                 { value: 'adminLPS', label: 'LPS' },
                 { value: 'superadmin', label: 'Super Admin' },
             ];
         }
-        if (loggedInUser.role === 'adminLPS') {
+        if (loggedInUser?.role === 'adminLPS') {
             return [
                 { value: 'petugasSampah', label: 'Petugas Sampah' },
                 { value: 'petugasIuran', label: 'Petugas Iuran' },
             ];
         }
         return [];
-    }, [loggedInUser.role]);
+    }, [loggedInUser?.role]);
 
    
     const columns: ColumnDef<User>[] = [

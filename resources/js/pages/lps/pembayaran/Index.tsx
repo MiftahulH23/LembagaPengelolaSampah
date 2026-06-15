@@ -237,6 +237,11 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
 
     const columns: ColumnDef<KartuKeluarga.Default>[] = [
         {
+            id: 'nama_search',
+            accessorKey: 'nama',
+            header: 'Nama Search',
+        },
+        {
             id: 'id',
             accessorKey: 'zona.nama_zona',
             header: 'Nama Kepala Keluarga',
@@ -294,7 +299,7 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
                 <p className="text-muted-foreground mb-4">
                     Rekapitulasi status pembayaran iuran warga per bulan untuk tahun {selectedYear}.
                 </p>
-                <DataTable columns={columns} data={kartuKeluarga}>
+                <DataTable columns={columns} data={kartuKeluarga} columnVisibility={{ nama_search: false }}>
                     {({ table }) => (
                         <DataTableControls
                             table={table}
