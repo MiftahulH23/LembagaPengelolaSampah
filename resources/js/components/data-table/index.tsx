@@ -213,9 +213,19 @@ export function DataTable<Data, Value>(props: DataTable<Data, Value> & Omit<Reac
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-64 text-center align-middle"
                 >
-                  Data tidak tersedia
+                  <div className="flex flex-col items-center justify-center space-y-3 py-6">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+                      <svg className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                    </div>
+                    <div className="text-base font-semibold text-slate-900">Belum ada data tersedia</div>
+                    <p className="text-sm text-slate-500 max-w-sm mx-auto">
+                        Mulai kelola data Anda dengan mengklik tombol Tambah di atas.
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}

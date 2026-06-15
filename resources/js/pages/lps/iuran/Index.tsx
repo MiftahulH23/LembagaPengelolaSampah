@@ -10,7 +10,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Iuran } from '@/types/data/iuran';
 import { Head, router, useForm } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { SquarePen, Trash2, TriangleAlert } from 'lucide-react';
+import { SquarePen, Trash2, TriangleAlert, CalendarDays } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -298,7 +298,15 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
         <AppLayout breadcrumbs={breadcrumb}>
             <Head title="Iuran" />
             <div className="container">
-                <h1>Pengaturan Iuran</h1>
+                <div className="mb-6 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <div className="rounded-lg bg-sky-100 p-2 text-sky-600">
+                            <CalendarDays className="h-6 w-6" />
+                        </div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Pengaturan Iuran</h1>
+                    </div>
+                    <p className="text-muted-foreground">Kelola besaran nominal iuran yang berlaku pada periode tertentu.</p>
+                </div>
                 <DataTable columns={columns} data={iuran}>
                     {({ table }) => (
                         <DataTableControls

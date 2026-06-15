@@ -8,7 +8,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Wilayah } from '@/types/data/wilayah';
 import { Head, router, useForm } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { SquarePen, Trash2, TriangleAlert } from 'lucide-react';
+import { SquarePen, Trash2, TriangleAlert, Landmark } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -99,7 +99,15 @@ const Index = (props: { kecamatan: Wilayah.Kecamatan[] }) => {
         <AppLayout breadcrumbs={breadcrumb}>
             <Head title="Kecamatan" />
             <div className="container">
-                <h1>Data Kecamatan</h1>
+                <div className="mb-6 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <div className="rounded-lg bg-sky-100 p-2 text-sky-600">
+                            <Landmark className="h-6 w-6" />
+                        </div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Data Kecamatan</h1>
+                    </div>
+                    <p className="text-muted-foreground">Kelola basis data wilayah kecamatan di Kota Pekanbaru.</p>
+                </div>
                 <DataTable columns={columns} data={kecamatan}>
                     {({ table }) => (
                         <DataTableControls

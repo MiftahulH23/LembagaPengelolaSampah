@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
-import { Check, HandCoins, X } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Check, HandCoins, X, Users, CheckCircle2, XCircle } from 'lucide-react';
 import { DataTableFilter } from '@/components/data-table/data-table-filter';
 
 
@@ -26,10 +27,10 @@ interface Iuran {
     tanggal_akhir_berlaku: string;
 }
 interface IuranPageProps {
-    kartuKeluarga: KartuKeluarga.Default[]; 
+    kartuKeluarga: KartuKeluarga.Default[];
     selectedYear: number;
     iuranTerbaru: Iuran | null;
-    zonas: Zona.Default[]; 
+    zonas: Zona.Default[];
     semuaPeriodeIuran: Iuran[] | null;
 }
 
@@ -44,7 +45,7 @@ function DialogTambahPembayaran({
 }: {
     months: string[];
     selectedYear: number;
-    selectedKK: KartuKeluarga.Default | null; 
+    selectedKK: KartuKeluarga.Default | null;
     isPaymentModalOpen: boolean;
     setIsPaymentModalOpen: (open: boolean) => void;
     semuaPeriodeIuran: Iuran[] | null;
@@ -119,7 +120,7 @@ function DialogTambahPembayaran({
 
         post(route('pembayaran.store', selectedKK.id), {
             preserveScroll: false,
-            preserveState: false, 
+            preserveState: false,
             onSuccess: () => {
                 setIsPaymentModalOpen(false);
             },
@@ -249,7 +250,7 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
                 <div className="flex flex-col">
                     <span className="font-medium">{row.original.nama}</span>
                     <span className="text-xs text-muted-foreground">
-                        {row.original.zona?.nama_zona}, RT {row.original.rt}/RW {row.original.rw}, 
+                        {row.original.zona?.nama_zona}, RT {row.original.rt}/RW {row.original.rw},
                     </span>
                 </div>
             ),
@@ -291,14 +292,59 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
     const breadcrumb = [{ title: 'Pembayaran Iuran', href: '/pembayaran' }];
     const dataZona = zonas.map((zona) => zona.nama_zona);
 
+    const totalWarga = kartuKeluarga.length;
+    const lunasSebagianAtauPenuh = kartuKeluarga.filter(kk => kk.pembayaran && kk.pembayaran.length > 0).length;
+    const belumBayarSamaSekali = totalWarga - lunasSebagianAtauPenuh;
+
     return (
         <AppLayout breadcrumbs={breadcrumb}>
             <Head title="Pembayaran Iuran" />
             <div className="container">
-                <h1>Pembayaran Iuran Warga</h1>
-                <p className="text-muted-foreground mb-4">
-                    Rekapitulasi status pembayaran iuran warga per bulan untuk tahun {selectedYear}.
-                </p>
+                <div className="mb-6 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <div className="rounded-lg bg-sky-100 p-2 text-sky-600">
+                            <HandCoins className="h-6 w-6" />
+                        </div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Pembayaran Iuran Warga</h1>
+                    </div>
+                    <p className="text-muted-foreground">
+                        Rekapitulasi status pembayaran iuran warga per bulan untuk tahun {selectedYear}.
+                    </p>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3 mb-6">
+                    <Card className='   h-fit'>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-0 ">
+                            <CardTitle className="text-sm font-medium text-slate-600">Total Kepala Keluarga</CardTitle>
+                            <Users className="h-4 w-4 text-sky-500" />
+                        </CardHeader>
+                        <CardContent className="px-4 pt-2">
+                            <div className="text-2xl font-bold leading-none">{totalWarga}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Terdaftar dalam sistem</p>
+                        </CardContent>
+                    </Card>
+                    <Card className='h-fit'>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-0">
+                            <CardTitle className="text-sm font-medium text-slate-600">Ada Pembayaran ({selectedYear})</CardTitle>
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        </CardHeader>
+                        <CardContent className="px-4 pt-2">
+                            <div className="text-2xl font-bold leading-none text-emerald-600">{lunasSebagianAtauPenuh}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Warga dengan riwayat pembayaran</p>
+                        </CardContent>
+                    </Card>
+                    <Card className='h-fit'>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-0">
+                            <CardTitle className="text-sm font-medium text-slate-600">Belum Ada Pembayaran</CardTitle>
+                            <XCircle className="h-4 w-4 text-rose-500" />
+                        </CardHeader>
+                        <CardContent className="px-4 pt-2">
+                            <div className="text-2xl font-bold leading-none text-rose-600">{belumBayarSamaSekali}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Belum membayar sama sekali</p>
+                        </CardContent>
+                    </Card>
+                </div>
+
                 <DataTable columns={columns} data={kartuKeluarga} columnVisibility={{ nama_search: false }}>
                     {({ table }) => (
                         <DataTableControls

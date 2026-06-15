@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
-import { Pencil } from 'lucide-react';
+import { Pencil, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 
 // --- Tipe Data ---
@@ -113,8 +113,13 @@ const JadwalIndex: React.FC<PageProps> = ({ semuaZona, jadwalTersimpan }) => {
         <AppLayout breadcrumbs={breadcrumb}>
             <Head title="Atur Jadwal Pengambilan" />
             <div className="container space-y-6">
-                <div>
-                    <h1>Atur Jadwal Pengambilan Sampah per Zona</h1>
+                <div className="mb-6 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <div className="rounded-lg bg-sky-100 p-2 text-sky-600">
+                            <CalendarDays className="h-6 w-6" />
+                        </div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Atur Jadwal Pengambilan Sampah</h1>
+                    </div>
                     <p className="text-muted-foreground">
                         Klik "Atur Jadwal" pada setiap hari untuk memilih zona mana saja yang akan diambil sampahnya.
                     </p>

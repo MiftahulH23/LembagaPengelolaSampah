@@ -1,5 +1,5 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, UserCog } from 'lucide-react';
 import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 import { DataTable, DataTableControls } from '@/components/data-table';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -115,7 +115,15 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
         <AppLayout breadcrumbs={breadcrumb}>
             <Head title="Manajemen Akun" />
             <div className="container">
-                <h1>Manajemen Akun</h1>
+                <div className="mb-6 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <div className="rounded-lg bg-sky-100 p-2 text-sky-600">
+                            <UserCog className="h-6 w-6" />
+                        </div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Manajemen Akun</h1>
+                    </div>
+                    <p className="text-muted-foreground">Kelola akun pengguna, atur peran (role), dan akses wilayah kerja.</p>
+                </div>
                 <DataTable columns={columns} data={user}>
                     {({ table }) => (
                         <DataTableControls

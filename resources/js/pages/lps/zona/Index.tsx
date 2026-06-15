@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
-import { SquarePen, Trash2, TriangleAlert } from 'lucide-react';
+import { SquarePen, Trash2, TriangleAlert, MapPin } from 'lucide-react';
 
 // Tipe Data
 interface Zona {
@@ -110,7 +110,15 @@ const ZonaIndex: React.FC<PageProps> = ({ zonas }) => {
         <AppLayout breadcrumbs={breadcrumb}>
             <Head title="Data Zona" />
             <div className="container">
-                <h1>Data Zona</h1>
+                <div className="mb-6 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <div className="rounded-lg bg-sky-100 p-2 text-sky-600">
+                            <MapPin className="h-6 w-6" />
+                        </div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Data Zona</h1>
+                    </div>
+                    <p className="text-muted-foreground">Kelola pemetaan zona pengambilan sampah di wilayah kerja Anda.</p>
+                </div>
                 <DataTable columns={columns} data={zonas}>
                     {({ table }) => (
                         <DataTableControls

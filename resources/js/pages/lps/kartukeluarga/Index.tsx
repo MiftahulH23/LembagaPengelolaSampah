@@ -9,7 +9,7 @@ import AppLayout from '@/layouts/app-layout';
 import { KartuKeluarga } from '@/types/data/kartukeluarga';
 import { Head, router, useForm } from '@inertiajs/react';
 import { ColumnDef, FilterFnOption } from '@tanstack/react-table';
-import { SquarePen, Trash2, TriangleAlert, Upload } from 'lucide-react';
+import { SquarePen, Trash2, TriangleAlert, Upload, Users } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -325,7 +325,15 @@ const Index = (props: { kartukeluarga: KartuKeluarga.Default[]; kecamatan: Kecam
         <AppLayout breadcrumbs={breadcrumb}>
             <Head title="Data Warga" />
             <div className="container">
-                <h1>Data Warga</h1>
+                <div className="mb-6 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <div className="rounded-lg bg-sky-100 p-2 text-sky-600">
+                            <Users className="h-6 w-6" />
+                        </div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Data Warga</h1>
+                    </div>
+                    <p className="text-muted-foreground">Kelola basis data warga dan jadwal pengambilan sampah per zona.</p>
+                </div>
                 <DataTable columns={columns} data={kartukeluarga}>
                     {({ table }) => (
                         <DataTableControls
