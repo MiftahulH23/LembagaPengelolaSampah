@@ -1,5 +1,7 @@
 import { Head } from '@inertiajs/react';
 import React from 'react';
+import LogoPekanbaru from '@/assets/images/LogoPekanbaru.svg';
+import DlhkLogo from '@/assets/images/dlhkLogo.jpeg';
 import { Area, Bar, BarChart, Legend, Line, LineChart, XAxis, YAxis } from 'recharts';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,8 +48,26 @@ const DashboardIndex: React.FC<PageProps> = ({ statistik, grafikIuran, grafikPen
         <AppLayout breadcrumbs={breadcrumb}>
             <Head title="Dashboard" />
             <div className="container space-y-6">
-                <div>
-                    <h1>Dashboard</h1>
+                {/* Hero Section */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sky-600 to-sky-900 p-8 text-white shadow-lg">
+                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+                    <div className="absolute inset-0 bg-black/10 mix-blend-multiply"></div>
+                    
+                    <div className="relative z-10 flex flex-col items-center justify-between gap-8 md:flex-row">
+                        <div className="flex flex-col items-center gap-3 text-center md:items-start md:text-left">
+                            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+                                Selamat Datang di Dashboard
+                            </h1>
+                            <p className="max-w-2xl text-base text-sky-100 sm:text-lg">
+                                Sistem Informasi Lembaga Pengelola Sampah (LPS) Dinas Lingkungan Hidup dan Kebersihan Kota Pekanbaru. Pantau progres iuran dan pengambilan sampah secara real-time.
+                            </p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-6 rounded-2xl bg-white/10 p-4 shadow-inner backdrop-blur-md border border-white/20">
+                            <img src={LogoPekanbaru} alt="Logo Pemko Pekanbaru" className="h-20 w-auto object-contain drop-shadow-md" />
+                            <div className="h-16 w-px bg-white/30"></div>
+                            <img src={DlhkLogo} alt="Logo DLHK / LPS" className="h-20 w-auto rounded-lg object-contain shadow-sm" />
+                        </div>
+                    </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
