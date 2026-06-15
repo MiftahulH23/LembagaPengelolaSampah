@@ -292,9 +292,15 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
     const breadcrumb = [{ title: 'Pembayaran Iuran', href: '/pembayaran' }];
     const dataZona = zonas.map((zona) => zona.nama_zona);
 
+    const currentMonth = new Date().getMonth() + 1;
+    const monthsName = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const currentMonthName = monthsName[currentMonth - 1];
+
     const totalWarga = kartuKeluarga.length;
-    const lunasSebagianAtauPenuh = kartuKeluarga.filter(kk => kk.pembayaran && kk.pembayaran.length > 0).length;
-    const belumBayarSamaSekali = totalWarga - lunasSebagianAtauPenuh;
+    // Warga yang sudah membayar iuran UNTUK bulan berjalan ini
+    const lunasBulanIni = kartuKeluarga.filter(kk => kk.pembayaran && kk.pembayaran.some(p => p.bulan === currentMonth)).length;
+    // Warga yang sudah lunas full 12 bulan di tahun yang dipilih
+    const lunasSetahun = kartuKeluarga.filter(kk => kk.pembayaran && kk.pembayaran.length === 12).length;
 
     return (
         <AppLayout breadcrumbs={breadcrumb}>
@@ -307,42 +313,9 @@ const IuranIndex: React.FC<IuranPageProps> = ({ kartuKeluarga, selectedYear, iur
                         </div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Pembayaran Iuran Warga</h1>
                     </div>
-                    <p className="text-muted-foreground">
-                        Rekapitulasi status pembayaran iuran warga per bulan untuk tahun {selectedYear}.
+                    <p className="text-muted-foreground text-sm">
+                        Rekapitulasi status pembayaran iuran warga untuk tahun {selectedYear}.
                     </p>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-3 mb-6">
-                    <Card className='   h-fit'>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-0 ">
-                            <CardTitle className="text-sm font-medium text-slate-600">Total Kepala Keluarga</CardTitle>
-                            <Users className="h-4 w-4 text-sky-500" />
-                        </CardHeader>
-                        <CardContent className="px-4 pt-2">
-                            <div className="text-2xl font-bold leading-none">{totalWarga}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Terdaftar dalam sistem</p>
-                        </CardContent>
-                    </Card>
-                    <Card className='h-fit'>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-0">
-                            <CardTitle className="text-sm font-medium text-slate-600">Ada Pembayaran ({selectedYear})</CardTitle>
-                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                        </CardHeader>
-                        <CardContent className="px-4 pt-2">
-                            <div className="text-2xl font-bold leading-none text-emerald-600">{lunasSebagianAtauPenuh}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Warga dengan riwayat pembayaran</p>
-                        </CardContent>
-                    </Card>
-                    <Card className='h-fit'>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-0">
-                            <CardTitle className="text-sm font-medium text-slate-600">Belum Ada Pembayaran</CardTitle>
-                            <XCircle className="h-4 w-4 text-rose-500" />
-                        </CardHeader>
-                        <CardContent className="px-4 pt-2">
-                            <div className="text-2xl font-bold leading-none text-rose-600">{belumBayarSamaSekali}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Belum membayar sama sekali</p>
-                        </CardContent>
-                    </Card>
                 </div>
 
                 <DataTable columns={columns} data={kartuKeluarga} columnVisibility={{ nama_search: false }}>
