@@ -126,7 +126,7 @@ const ZonaIndex: React.FC<PageProps> = ({ zonas }) => {
             </div>
 
             {/* Modal Tambah */}
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <Dialog open={isAddModalOpen} onOpenChange={(v) => { if(!v) reset(); setIsAddModalOpen(v); }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Tambah Zona Baru</DialogTitle>
@@ -147,7 +147,7 @@ const ZonaIndex: React.FC<PageProps> = ({ zonas }) => {
             </Dialog>
 
             {/* Modal Edit */}
-            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+            <Dialog open={isEditModalOpen} onOpenChange={(v) => { if(!v) resetEditForm(); setIsEditModalOpen(v); }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Edit Zona</DialogTitle>

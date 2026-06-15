@@ -360,7 +360,7 @@ const Index = (props: { kartukeluarga: KartuKeluarga.Default[]; kecamatan: Kecam
                 </DataTable>
             </div>
 
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <Dialog open={isAddModalOpen} onOpenChange={(v) => { if(!v) reset(); setIsAddModalOpen(v); }}>
                 <DialogContent className="sm:max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>Tambah Data Warga</DialogTitle>
@@ -385,7 +385,7 @@ const Index = (props: { kartukeluarga: KartuKeluarga.Default[]; kecamatan: Kecam
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+            <Dialog open={isEditModalOpen} onOpenChange={(v) => { if(!v) resetEditForm(); setIsEditModalOpen(v); }}>
                 <DialogContent className="sm:max-w-3xl" onOpenAutoFocus={(e) => e.preventDefault()}>
                     <DialogHeader>
                         <DialogTitle>Edit Data Warga</DialogTitle>

@@ -8,10 +8,10 @@ import { User } from '@/types';
 import { Wilayah } from '@/types/data/wilayah';
 import { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
-import InputError from '../../components/input-error'; 
-import { Button } from '../../components/ui/button'; 
-import { Input } from '../../components/ui/input'; 
-import { Label } from '../../components/ui/label'; 
+import InputError from '../../components/input-error';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'; // Path relatif
 
 // Tipe AuthUser
@@ -19,7 +19,7 @@ interface AuthUser {
     id: number;
     username: string;
     role: 'superadmin' | 'adminLPS' | 'petugasSampah' | 'petugasIuran' | string;
-    kelurahan_id: number | null; 
+    kelurahan_id: number | null;
 }
 
 // Tipe data untuk form
@@ -29,7 +29,7 @@ type RegisterForm = {
     role: string;
     password: string;
     password_confirmation: string;
-    kelurahan_id: string; 
+    kelurahan_id: string;
 };
 
 export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelurahan[] }) {
@@ -39,20 +39,20 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
     const loggedInUser = auth.user; // Ambil object user lengkap
 
     const isKelurahanDisabled = loggedInUser?.role === 'adminLPS';
-    
+
     const initialKelurahanId =
         isKelurahanDisabled && kelurahanOptions.length === 1
-            ? String(kelurahanOptions[0].id) 
+            ? String(kelurahanOptions[0].id)
             : '';
 
 
-    const { data, setData, post, processing, errors, reset } = useForm<RegisterForm>({
+    const { data, setData, post, processing, errors, reset, clearErrors } = useForm<RegisterForm>({
         username: '',
         nohp: '',
         role: '',
         password: '',
         password_confirmation: '',
-        kelurahan_id: initialKelurahanId, 
+        kelurahan_id: initialKelurahanId,
     });
 
     useEffect(() => {
@@ -67,6 +67,7 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
             preserveScroll: true,
             onSuccess: () => {
                 reset();
+                clearErrors();
                 setData('kelurahan_id', initialKelurahanId);
                 setIsAddModalOpen(false);
                 toast.success('Akun berhasil ditambahkan');
@@ -96,7 +97,7 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
         return [];
     }, [loggedInUser?.role]);
 
-   
+
     const columns: ColumnDef<User>[] = [
         { id: 'no', header: 'No', cell: ({ row }) => row.index + 1 },
         { id: 'username', accessorKey: 'username', header: 'Username' },
@@ -122,7 +123,14 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                             action={
                                 <Button
                                     onClick={() => {
-                                        reset();
+                                        data.kelurahan_id = '',
+                                            data.nohp = '',
+                                            data.password = '',
+                                            data.password_confirmation = '',
+                                            data.role = '',
+                                            data.username = '',
+                                            reset();
+                                        clearErrors();
                                         setData('kelurahan_id', initialKelurahanId);
                                         setIsAddModalOpen(true);
                                     }}
@@ -133,7 +141,7 @@ export default function Register(props: { user: User[]; kelurahan: Wilayah.Kelur
                         ></DataTableControls>
                     )}
                 </DataTable>
-                <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+                <Dialog open={isAddModalOpen} onOpenChange={(v) => { if (!v) { reset(); clearErrors(); } setIsAddModalOpen(v); }}>
                     <DialogContent>
                         <form method="POST" className="flex flex-col gap-6" onSubmit={submit}>
                             <div className="grid gap-6">

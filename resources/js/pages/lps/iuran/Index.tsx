@@ -35,7 +35,7 @@ const months = [
 
 // Interface untuk form data
 interface IuranFormData {
-    [key: string]: any; 
+    [key: string]: any;
     nominal_iuran: string;
     bulan_mulai: string;
     tahun_mulai: string;
@@ -183,7 +183,7 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
         bulan_akhir: '',
         tahun_akhir: String(new Date().getFullYear()),
     });
-    
+
     // State useForm untuk EDIT
     const {
         data: editData,
@@ -247,7 +247,7 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
         post(route('iuran.store'), {
             preserveScroll: true,
             onSuccess: () => {
-                reset(); 
+                reset();
                 setIsAddModalOpen(false);
             },
             onError: (formErrors) => {
@@ -307,6 +307,11 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
                             action={
                                 <Button
                                     onClick={() => {
+                                        data.bulan_akhir = '',
+                                            data.bulan_mulai = '',
+                                            data.tahun_akhir = '',
+                                            data.tahun_mulai = '',
+                                            data.nominal_iuran = ''
                                         reset();
                                         setIsAddModalOpen(true);
                                     }}
@@ -319,17 +324,17 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
                 </DataTable>
 
                 {/* Modal Tambah Data */}
-                <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+                <Dialog open={isAddModalOpen} onOpenChange={(v) => { if (!v) reset(); setIsAddModalOpen(v); }}>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Tambah Periode Iuran Baru</DialogTitle>
                             <DialogDescription>Masukkan nominal dan periode iuran yang baru.</DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleSubmit}>
-                            <IuranForm 
-                                data={data} 
-                                setData={setData} 
-                                errors={errors} 
+                            <IuranForm
+                                data={data}
+                                setData={setData}
+                                errors={errors}
                             />
                             <DialogFooter className="mt-4">
                                 <Button type="submit" disabled={processing}>
@@ -341,18 +346,18 @@ const Index = (props: { iuran: Iuran.Default[] }) => {
                 </Dialog>
 
                 {/* Modal Edit Data */}
-                <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <Dialog open={isEditModalOpen} onOpenChange={(v) => { if (!v) resetEditForm(); setIsEditModalOpen(v); }}>
                     <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
                         <DialogHeader>
                             <DialogTitle>Edit Periode Iuran</DialogTitle>
                             <DialogDescription>Ubah nominal atau periode iuran yang sudah ada.</DialogDescription>
-                        </DialogHeader> 
-                        
+                        </DialogHeader>
+
                         <form onSubmit={handleEditSubmit}>
-                            <IuranForm 
-                                data={editData} 
-                                setData={setEditData} 
-                                errors={editErrors} 
+                            <IuranForm
+                                data={editData}
+                                setData={setEditData}
+                                errors={editErrors}
                             />
                             <DialogFooter className="mt-4">
                                 <Button type="submit" disabled={editProcessing}>

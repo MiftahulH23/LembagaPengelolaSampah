@@ -26,6 +26,7 @@ const Index = (props: { kelurahan: Wilayah.Kelurahan[]; kecamatan: Wilayah.Kecam
         put,
         processing: editProcessing,
         errors: editErrors,
+        reset: resetEditForm,
     } = useForm({ nama_kelurahan: '', kecamatan_id: '' });
     const columns: ColumnDef<Wilayah.Kelurahan>[] = [
         {
@@ -146,7 +147,7 @@ const Index = (props: { kelurahan: Wilayah.Kelurahan[]; kecamatan: Wilayah.Kecam
                     )}
                 </DataTable>
                 {/* Modal Tambah Data */}
-                <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+                <Dialog open={isAddModalOpen} onOpenChange={(v) => { if(!v) reset(); setIsAddModalOpen(v); }}>
                     <DialogContent>
                         <DialogTitle>Tambah Kelurahan</DialogTitle>
                         <form onSubmit={handleSubmit}>
@@ -188,7 +189,7 @@ const Index = (props: { kelurahan: Wilayah.Kelurahan[]; kecamatan: Wilayah.Kecam
                 </Dialog>
 
                 {/* Modal Edit Data */}
-                <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <Dialog open={isEditModalOpen} onOpenChange={(v) => { if(!v) resetEditForm(); setIsEditModalOpen(v); }}>
                     <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
                         <DialogTitle>Edit Kelurahan</DialogTitle>
                         <form onSubmit={handleEditSubmit}>
